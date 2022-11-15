@@ -43,8 +43,8 @@ stripe==4.2.0
 httpie==3.2.1
 
 pry.py==0.1.1
-
 drf-yasg==1.17.1
+boto3
 
 
 
