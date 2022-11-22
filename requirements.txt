@@ -2,7 +2,6 @@ Django==4.0.4
 djangorestframework==3.14.0
 
 #bd
-psycopg2==2.9.3
 psycopg2-binary==2.9.3
 
 #linters
@@ -41,9 +40,12 @@ django-storages==1.13.1
 
 stripe==4.2.0
 httpie==3.2.1
+ruamel.yaml==0.16.7
+ruamel.yaml.clib==0.2.0
 
 pry.py==0.1.1
-drf-yasg==1.17.1
+django-rest-swagger
+drf-yasg
 boto3
 
 

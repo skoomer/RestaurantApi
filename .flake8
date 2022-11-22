@@ -10,7 +10,10 @@ exclude =
         settings.py,
         locustfile.py
 ignore = 
-        F811,
-        W503,
+        # W503 : line break before binary operator
+        W503.
+        # F811 : redefinition of unused name from line N
+        F811.
+
 
 max-line-length = 120
