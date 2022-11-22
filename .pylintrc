@@ -31,10 +31,8 @@ ignore=CVS,
 # matches against base names, not paths.
 ignore-patterns=
 ignore-paths=
-               app/doctorweb/apps/accounts/admin.py,
-               app/doctorweb/apps/accounts/models.py,
-               app/doctorweb/apps/doctor/factories.py,
-               app/doctorweb/apps/doctor/tests/test_views.py,
+                app/apps/accounts/admin.py,
+                app/apps/accounts/models.py,
 
 
 
