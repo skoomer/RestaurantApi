@@ -19,6 +19,7 @@ wait-for-postgres.sh
 wait-for-it.sh
 **/migrations/**
 **/media/**
+**/staticfiles/**
 **/cassettes/**
 !**/migrations
 !**/migrations/__init__.py
