@@ -14,8 +14,9 @@ class CustomLoginSerializer(LoginSerializer):
 class UserSerializer(UserDetailsSerializer):
     class Meta:
         model = User
-        fields = ("first_name", "last_name", "avatar")
+        fields = ("email", "first_name", "last_name", "avatar")
         extra_kwargs = {
             "first_name": {"required": True},
             "last_name": {"required": True},
+            "email": {"read_only": True},
         }
