@@ -33,6 +33,7 @@ ignore-patterns=
 ignore-paths=
                 app/apps/accounts/admin.py,
                 app/apps/accounts/models.py,
+                app/apps/accounts/serializers.py,
 
 
 

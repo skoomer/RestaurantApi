@@ -33,7 +33,6 @@ class UserManager(BaseUserManager):
         )
         user.is_admin = True
         user.is_active = True
-        user.is_verified = True
         user.save(using=self._db)
         return user
 
@@ -49,8 +48,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     username = None
     first_name = models.CharField(max_length=30, blank=True, verbose_name="first name")
     last_name = models.CharField(max_length=30, blank=True, verbose_name="last name")
-    is_verified = models.BooleanField(default=False, verbose_name="verify")
-    is_active = models.BooleanField(default=False, verbose_name="active")
+    is_active = models.BooleanField(default=True, verbose_name="active")
     is_admin = models.BooleanField(default=False, verbose_name="admin")
 
     objects = UserManager()
