@@ -1,5 +1,6 @@
 from dj_rest_auth.registration.serializers import RegisterSerializer
-from dj_rest_auth.serializers import LoginSerializer
+from dj_rest_auth.serializers import LoginSerializer, UserDetailsSerializer
+from apps.accounts.models import User
 
 
 class CustomRegisterSerializer(RegisterSerializer):
@@ -8,3 +9,13 @@ class CustomRegisterSerializer(RegisterSerializer):
 
 class CustomLoginSerializer(LoginSerializer):
     username = None
+
+
+class UserSerializer(UserDetailsSerializer):
+    class Meta:
+        model = User
+        fields = ("first_name", "last_name", "avatar")
+        extra_kwargs = {
+            "first_name": {"required": True},
+            "last_name": {"required": True},
+        }

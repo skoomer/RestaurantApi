@@ -150,8 +150,11 @@ REST_FRAMEWORK = {
 REST_USE_JWT = True
 
 JWT_AUTH_COOKIE = 'my-app-auth'
+
 REST_AUTH_SERIALIZERS = {
-      'LOGIN_SERIALIZER': 'accounts.serializers.CustomLoginSerializer'
+      'LOGIN_SERIALIZER': 'accounts.serializers.CustomLoginSerializer',
+      'USER_DETAILS_SERIALIZER':'accounts.serializers.UserSerializer'
+
 }
 
 REST_AUTH_REGISTER_SERIALIZERS = {
@@ -180,10 +183,32 @@ USE_TZ = True
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static/')]
+STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
-STATIC_URL = "/static/"
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static/')]
+USE_S3 = env("USE_S3") == "TRUE"
+if USE_S3:
+  AWS_S3_ACCESS_KEY_ID = env('AWS_S3_ACCESS_KEY_ID')
+  AWS_S3_SECRET_ACCESS_KEY = env("AWS_S3_SECRET_ACCESS_KEY")
+  AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME")
+  AWS_S3_CUSTOM_DOMAIN = '%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME
+  AWS_DEFAULT_ACL = 'public-read'
+  AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+  }
+  AWS_LOCATION = 'static'
+  STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
+  MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
+  MEDIA_ROOT = MEDIA_URL
+  STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+else:
+
+  STATIC_URL = '/static/'
+  STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
