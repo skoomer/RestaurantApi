@@ -1,5 +1,5 @@
 Django==3.1
-djangorestframework
+djangorestframework==3.14.0
 
 #bd
 psycopg2-binary==2.9.3
@@ -29,26 +29,26 @@ Pillow==9.1.0
 pre-commit==2.18.1
 
 #auth
-django-allauth
-djangorestframework-simplejwt
-django-rest-auth
-dj-rest-auth
+django-allauth==0.51.0
+djangorestframework-simplejwt==5.2.2
+django-rest-auth==0.9.5
+dj-rest-auth==2.2.5
 
 #utils
-django-model-utils
-django-extensions
-django-filter
-django-storages
+django-model-utils==4.2.0
+django-extensions==3.2.1
+django-filter==22.1
+django-storages==1.13.1
 
 stripe==4.2.0
 httpie==3.2.1
 ruamel.yaml==0.16.7
 ruamel.yaml.clib==0.2.0
 
-pry.py
-django-rest-swagger
-drf-yasg
-boto3
+pry.py==0.1.1
+django-rest-swagger==2.2.0
+drf-yasg==1.17.1
+boto3==1.26.14
 
 
 

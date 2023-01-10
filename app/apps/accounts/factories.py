@@ -3,7 +3,7 @@ from .models import User
 
 
 class UserFactory(factory.django.DjangoModelFactory):
-    """User factory"""
+    """Used to test  user model"""
 
     class Meta:
         """meta user"""
