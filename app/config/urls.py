@@ -4,6 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path, include
 from dj_rest_auth.registration.views import VerifyEmailView
+from apps.accounts.views import FacebookLogin
 
 router = DefaultRouter()
 
@@ -29,6 +30,7 @@ urlpatterns = [
         VerifyEmailView.as_view(),
         name="account_email_verification_sent",
     ),
+    path('dj-rest-auth/facebook/', FacebookLogin.as_view(), name='fb_login'),
 ]
 urlpatterns += router.urls
 
