@@ -1,3 +1,4 @@
+from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
@@ -41,15 +42,15 @@ class User(AbstractBaseUser, PermissionsMixin):
     """Abstract user model."""
 
     email = models.EmailField(
-        verbose_name="email address",
+        verbose_name=_("email address"),
         max_length=255,
         unique=True,
     )
     username = None
-    first_name = models.CharField(max_length=30, blank=True, verbose_name="first name")
-    last_name = models.CharField(max_length=30, blank=True, verbose_name="last name")
-    is_active = models.BooleanField(default=True, verbose_name="active")
-    is_admin = models.BooleanField(default=False, verbose_name="admin")
+    first_name = models.CharField(max_length=30, blank=True, verbose_name=_("first name"))
+    last_name = models.CharField(max_length=30, blank=True, verbose_name=_("last name"))
+    is_active = models.BooleanField(default=True, verbose_name=_("active"))
+    is_admin = models.BooleanField(default=False, verbose_name=_("admin"))
 
     objects = UserManager()
 
