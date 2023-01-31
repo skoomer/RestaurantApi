@@ -10,7 +10,7 @@ router = DefaultRouter()
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("accounts/", include("apps.accounts.urls")),
+    path("api/accounts/", include("apps.accounts.urls")),
     path("", include(router.urls)),
     path("account/", include("allauth.urls")),
     path("dj-rest-auth/", include("dj_rest_auth.urls")),

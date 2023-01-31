@@ -31,10 +31,7 @@ ignore=CVS,
 # matches against base names, not paths.
 ignore-patterns=
 ignore-paths=
-                app/apps/accounts/admin.py,
                 app/apps/accounts/models.py,
-                app/apps/accounts/serializers.py,
-
 
 
 # Python code to execute, usually for sys.path manipulation such as
