@@ -187,7 +187,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static/')]
-USE_S3 = env("USE_S3") == "TRUE"
+USE_S3 = env("USE_S3")
 if USE_S3:
   AWS_S3_ACCESS_KEY_ID = env('AWS_S3_ACCESS_KEY_ID')
   AWS_S3_SECRET_ACCESS_KEY = env("AWS_S3_SECRET_ACCESS_KEY")

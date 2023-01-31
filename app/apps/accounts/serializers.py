@@ -16,7 +16,5 @@ class UserSerializer(UserDetailsSerializer):
         model = User
         fields = ("email", "first_name", "last_name", "avatar")
         extra_kwargs = {
-            "first_name": {"required": True},
-            "last_name": {"required": True},
             "email": {"read_only": True},
         }

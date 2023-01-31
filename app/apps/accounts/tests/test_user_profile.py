@@ -1,6 +1,7 @@
 import pytest
 import factory
-from django.test import TestCase, Client
+from django.test import TestCase
+from django.test.client import BOUNDARY, MULTIPART_CONTENT, encode_multipart
 from dj_rest_auth.registration.app_settings import RegisterSerializer
 from apps.accounts.models import User
 from apps.accounts.factories import UserFactory
@@ -10,6 +11,9 @@ from django.urls import reverse
 @pytest.mark.django_db(transaction=True)
 class TestUserView(TestCase):
     """test user profile change password first name"""
+    def __init__(self):
+        super().__init__()
+        self.file_temp_img = None
 
     def setUp(self):
         self.data_form = {
@@ -21,7 +25,6 @@ class TestUserView(TestCase):
             "email": "testgmail@mail.com",
             "password": "password1245",
         }
-        self.client = Client(enforce_csrf_checks=False)
         self.serializer_class = RegisterSerializer
         self.register_url = reverse("rest_register")
         self.profile_url = reverse("rest_user_details")
@@ -41,7 +44,6 @@ class TestUserView(TestCase):
 
         response = self.user_login
         assert response is True
-
         response = self.client.get(self.profile_url)
         assert response.status_code == 200
         # get user data  - first name
@@ -86,3 +88,19 @@ class TestUserView(TestCase):
             username=self.data_login["email"], password=data["new_password1"]
         )
         assert response is True
+
+    @pytest.fixture(autouse=True)
+    def prepare_fixture(self, file_temp_img):
+        self.file_temp_img = file_temp_img
+
+    def test_user_update_avatar(self):
+        profile_url = reverse("rest_user_details")
+        tmp_file = self.file_temp_img
+
+        with open(tmp_file.name, "rb") as fp:
+            response = self.client.put(
+                profile_url,
+                encode_multipart(BOUNDARY, {"avatar": fp}),
+                content_type=MULTIPART_CONTENT,
+            )
+        assert response.status_code == 200

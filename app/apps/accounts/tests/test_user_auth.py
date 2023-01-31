@@ -1,5 +1,5 @@
 import pytest
-from django.test import TestCase, Client
+from django.test import TestCase
 from dj_rest_auth.registration.app_settings import RegisterSerializer
 from apps.accounts.models import User
 from django.urls import reverse
@@ -11,7 +11,6 @@ class TestUserView(TestCase):
     """user views"""
 
     def setUp(self):
-        self.client = Client(enforce_csrf_checks=False)
         self.serializer_class = RegisterSerializer
         self.register_url = reverse("rest_register")
         self.login_url = reverse("rest_login")

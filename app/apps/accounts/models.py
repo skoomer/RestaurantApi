@@ -41,7 +41,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     """Abstract user model."""
 
     def upload_to(instance, filename):
-        return "images/{filename}".format(filename=filename)
+        return 'images/user_{0}/{1}'.format(instance.id, filename)
 
     email = models.EmailField(
         verbose_name="email address",
