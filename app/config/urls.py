@@ -5,7 +5,6 @@ from django.conf.urls.static import static
 from django.urls import path, include
 from dj_rest_auth.registration.views import VerifyEmailView
 from apps.accounts.views import FacebookLogin
-
 router = DefaultRouter()
 
 

@@ -41,16 +41,20 @@ class UserManager(BaseUserManager):
 class User(AbstractBaseUser, PermissionsMixin):
     """Abstract user model."""
 
+    def upload_to(instance, filename):
+        return 'images/user_{0}/{1}'.format(instance.id, filename)
+
     email = models.EmailField(
         verbose_name=_("email address"),
         max_length=255,
         unique=True,
     )
     username = None
-    first_name = models.CharField(max_length=30, blank=True, verbose_name=_("first name"))
-    last_name = models.CharField(max_length=30, blank=True, verbose_name=_("last name"))
-    is_active = models.BooleanField(default=True, verbose_name=_("active"))
-    is_admin = models.BooleanField(default=False, verbose_name=_("admin"))
+    first_name = models.CharField(max_length=30, blank=True, verbose_name="first name")
+    last_name = models.CharField(max_length=30, blank=True, verbose_name="last name")
+    is_active = models.BooleanField(default=True, verbose_name="active")
+    is_admin = models.BooleanField(default=False, verbose_name="admin")
+    avatar = models.ImageField(upload_to=upload_to, null=True, blank=True)
 
     objects = UserManager()
 
