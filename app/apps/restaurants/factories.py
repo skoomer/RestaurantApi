@@ -1,5 +1,6 @@
 import factory
 from django.contrib.gis.geos import Point
+from django.utils import timezone
 from .models import Restaurant, Cuisines, Dishes
 
 
@@ -11,11 +12,12 @@ class RestaurantFactory(factory.django.DjangoModelFactory):
 
         model = Restaurant
 
-    title = "test"
-    description = "description restaurant"
+    title = factory.Sequence(lambda n: "Restaurant%s" % n)
+    description = factory.Sequence(lambda n: "Description%s" % n)
     photo = factory.django.ImageField(color="blue")
     location = Point(10.0, 20.0)
     status = Restaurant.STATUS.open
+    creation_date = factory.LazyFunction(timezone.now)
     email = factory.LazyAttribute(lambda o: "%s@example.org" % o.title)
 
 
@@ -27,7 +29,7 @@ class CuisinesFactory(factory.django.DjangoModelFactory):
 
         model = Cuisines
 
-    name = "test_cuisines"
+    name = factory.Sequence(lambda n: "Cuisines%s" % n)
     restaurants = factory.SubFactory(RestaurantFactory)
 
 
@@ -39,7 +41,7 @@ class DishesFactory(factory.django.DjangoModelFactory):
 
         model = Dishes
 
-    title = "test_dishes"
+    title = factory.Sequence(lambda n: "Dishes%s" % n)
     description = "description dishes"
     price = factory.Faker("pydecimal", left_digits=3, right_digits=2, positive=True)
     like = factory.Faker("random_int", min=0, max=100)

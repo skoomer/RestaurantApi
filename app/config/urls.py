@@ -30,6 +30,8 @@ urlpatterns = [
         name="account_email_verification_sent",
     ),
     path('dj-rest-auth/facebook/', FacebookLogin.as_view(), name='fb_login'),
+
+    path('api/', include('apps.restaurants.urls', namespace='restaurants')),
 ]
 urlpatterns += router.urls
 
