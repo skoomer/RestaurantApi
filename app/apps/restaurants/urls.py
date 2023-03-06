@@ -13,24 +13,6 @@ urlpatterns = [
         ),
         name="restaurant-list",
     ),
-    path(
-        "restaurants/",
-        RestaurantListView.as_view(
-            {
-                "post": "retrieve",
-            }
-        ),
-        name="restaurant-create",
-    ),
-    path(
-        "restaurants/<int:pk>/",
-        RestaurantListView.as_view(
-            {
-                "get": "retrieve",
-            }
-        ),
-        name="restaurant-detail",
-    ),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

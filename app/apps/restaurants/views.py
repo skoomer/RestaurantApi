@@ -6,7 +6,7 @@ from .filters import RestaurantFilter
 
 
 class RestaurantListView(
-    viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin
+    viewsets.GenericViewSet, mixins.ListModelMixin
 ):
     """3. Endpoint with list of all restaurants with
     Fields: name, description, location, image, had order
@@ -20,7 +20,6 @@ class RestaurantListView(
     permission_classes = [permissions.AllowAny]
     lookup_field = "pk"
     filterset_class = RestaurantFilter
-    http_method_name = ["post", "get"]
     orderiing_fields = ["cuisines__dishes__price"]
 
     def get_queryset(self):
