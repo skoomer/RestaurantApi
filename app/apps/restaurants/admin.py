@@ -15,7 +15,7 @@ class CuisinesAdmin(admin.ModelAdmin):
 
 class DishesAdmin(admin.ModelAdmin):
     """add dishes model to dashboard admin"""
-    list_display = ["title", "description", "price", "like", "cuisines"]
+    list_display = ["title", "description", "price", "like_user", "cuisines"]
 
 
 admin.site.register(Restaurant, RestaurantAdmin)

@@ -3,10 +3,12 @@ from model_utils import Choices
 from django.contrib.gis.db import models as gis_models
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
+from django.contrib.postgres.fields import ArrayField
 
 
 class Restaurant(models.Model):
     """model object"""
+
     STATUS = Choices("open", "close")
 
     def upload_to(self, filename):
@@ -36,6 +38,7 @@ class Restaurant(models.Model):
 
 class Cuisines(models.Model):
     """model object"""
+
     name = models.CharField(max_length=100, verbose_name=_("cuisines"))
     restaurants = models.ForeignKey(
         Restaurant,
@@ -50,10 +53,17 @@ class Cuisines(models.Model):
 
 class Dishes(models.Model):
     """model object"""
+
     title = models.CharField(max_length=100, verbose_name=_("Dishes name"))
     description = models.TextField(verbose_name=_("Description"))
     price = models.DecimalField(verbose_name=_("Price"), max_digits=6, decimal_places=2)
-    like = models.IntegerField(verbose_name=_("Like a dishes"), default=0)
+    like_user = ArrayField(
+        models.IntegerField(),
+        default=list,
+        verbose_name=_("Like a dishes"),
+        blank=True,
+        null=True,
+    )
     cuisines = models.ForeignKey(
         Cuisines,
         verbose_name=_("Cuisines"),

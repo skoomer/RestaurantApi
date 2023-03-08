@@ -44,5 +44,5 @@ class DishesFactory(factory.django.DjangoModelFactory):
     title = factory.Sequence(lambda n: "Dishes%s" % n)
     description = "description dishes"
     price = factory.Faker("pydecimal", left_digits=3, right_digits=2, positive=True)
-    like = factory.Faker("random_int", min=0, max=100)
+    like_user = None
     cuisines = factory.SubFactory(CuisinesFactory)

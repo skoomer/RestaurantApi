@@ -13,6 +13,15 @@ urlpatterns = [
         ),
         name="restaurant-list",
     ),
+    path(
+        "restaurants/<int:pk>/",
+        RestaurantListView.as_view(
+            {
+                "get": "retrieve",
+            }
+        ),
+        name="restaurant-detail",
+    ),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

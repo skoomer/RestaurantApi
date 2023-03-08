@@ -5,18 +5,19 @@ from apps.restaurants.factories import RestaurantFactory, CuisinesFactory, Dishe
 from apps.restaurants.models import Restaurant
 from django.contrib.gis.geos import Point
 from apps.restaurants.filters import RestaurantFilter
+from apps.restaurants.serializers import RestaurantDetailSerializer
 
 
 @pytest.mark.django_db(transaction=True)
 class RestaurantListViewTestCase(TestCase):
     """unittest restaurant api"""
+
     def setUp(self):
         self.url_restaurants = reverse("restaurants:restaurant-list")
 
         self.restaurant1 = RestaurantFactory(
             title="Restaurant1", description="Description1", location=Point(1, 1)
         )
-
         self.restaurant2 = RestaurantFactory(
             title="Restaurant2", description="Description2", location=Point(2, 2)
         )
@@ -42,7 +43,6 @@ class RestaurantListViewTestCase(TestCase):
         data = {"cuisines": self.cuisines1.name}
         response = self.client.get(self.url_restaurants, data=data)
         self.assertEqual(response.status_code, 200)
-        # import pdb; pdb.set_trace()
         self.assertEqual(len(response.data["results"]), 1)
         self.assertEqual(response.data["results"][0]["title"], self.restaurant1.title)
 
@@ -79,11 +79,24 @@ class RestaurantListViewTestCase(TestCase):
 
     def test_filter_restaurants_by_coordinates(self):
         query_params = {"coordinates": "2,2"}
-        instance = RestaurantFilter(
-            query_params, queryset=Restaurant.objects.all()
-        )
+        instance = RestaurantFilter(query_params, queryset=Restaurant.objects.all())
         queryset = instance.qs
 
         self.assertEqual(queryset.count(), 3)
         self.assertEqual(queryset.first(), self.restaurant2)
         self.assertEqual(queryset.last(), self.restaurant1)
+
+    def test_detail_restaurants(self):
+        url_restaurants_detail = reverse(
+            "restaurants:restaurant-detail", args=[self.restaurant1.pk]
+        )
+        response = self.client.get(url_restaurants_detail)
+        self.assertEqual(response.status_code, 200)
+
+        serializer = RestaurantDetailSerializer(self.restaurant1)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, serializer.data)
+
+    def test_number_of_dishes(self):
+        serializer = RestaurantDetailSerializer(self.restaurant1)
+        self.assertEqual(serializer.get_number_of_dishes(self.restaurant1), 1)

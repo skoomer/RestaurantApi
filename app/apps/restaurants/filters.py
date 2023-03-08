@@ -5,11 +5,18 @@ from django.contrib.gis.db.models.functions import Distance
 
 class RestaurantFilter(filters.FilterSet):
     """restaurant filters: cuisines,description, avg price,title, distance"""
-    cuisines = filters.CharFilter(field_name="cuisines__name", label="Cuisines name")
-    description = filters.CharFilter(
-        field_name="description", label="Description restaurants"
+
+    cuisines = filters.CharFilter(
+        field_name="cuisines__name", label="Cuisines name", lookup_expr="icontains"
     )
-    title = filters.CharFilter(field_name="title", label="Title restaurant")
+    description = filters.CharFilter(
+        field_name="description",
+        label="Description restaurants",
+        lookup_expr="icontains",
+    )
+    title = filters.CharFilter(
+        field_name="title", label="Title restaurant", lookup_expr="icontains"
+    )
 
     cuisines__dishes__price__gt = filters.NumberFilter(
         field_name="cuisines__dishes__price", lookup_expr="gt"
