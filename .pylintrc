@@ -173,6 +173,7 @@ disable=print-statement,
         W0221,
         R1710,
         R1732,
+        W0201
 
     
         

@@ -2,7 +2,7 @@ import pytest
 import factory
 from django.test import TestCase
 from django.test.client import BOUNDARY, MULTIPART_CONTENT, encode_multipart
-from dj_rest_auth.registration.app_settings import RegisterSerializer
+from dj_rest_auth.registration.serializers import RegisterSerializer
 from apps.accounts.models import User
 from apps.accounts.factories import UserFactory
 from django.urls import reverse
@@ -11,9 +11,6 @@ from django.urls import reverse
 @pytest.mark.django_db(transaction=True)
 class TestUserView(TestCase):
     """test user profile change password first name"""
-    def __init__(self):
-        super().__init__()
-        self.file_temp_img = None
 
     def setUp(self):
         self.data_form = {

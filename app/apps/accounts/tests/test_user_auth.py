@@ -1,6 +1,6 @@
 import pytest
 from django.test import TestCase
-from dj_rest_auth.registration.app_settings import RegisterSerializer
+from dj_rest_auth.registration.serializers import RegisterSerializer
 from apps.accounts.models import User
 from rest_framework import status
 from django.urls import reverse
