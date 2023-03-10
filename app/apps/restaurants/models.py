@@ -6,6 +6,7 @@ from django.utils import timezone
 
 class Restaurant(models.Model):
     """model object"""
+
     STATUS = Choices("open", "close")
 
     def upload_to(self, filename):
@@ -35,8 +36,9 @@ class Restaurant(models.Model):
 
 class Cuisines(models.Model):
     """model object"""
+
     name = models.CharField(max_length=100, verbose_name="cuisines")
-    restaurants = models.ForeignKey(
+    restaurants = models.ManyToManyField(
         Restaurant,
         verbose_name="Restaurants",
         related_name="cuisines",
@@ -49,10 +51,19 @@ class Cuisines(models.Model):
 
 class Dishes(models.Model):
     """model object"""
+
     title = models.CharField(max_length=100, verbose_name="Dishes name")
     description = models.TextField(verbose_name="Description")
     price = models.DecimalField(verbose_name="Price", max_digits=6, decimal_places=2)
     like = models.IntegerField(verbose_name="Like a dishes", default=0)
+    restaurants = models.ForeignKey(
+        Restaurant,
+        blank=True,
+        null=True,
+        related_name="dishes_restaurant",
+        on_delete=models.CASCADE,
+        verbose_name="Dishes restaurants",
+    )
     cuisines = models.ForeignKey(
         Cuisines,
         verbose_name="Cuisines",
