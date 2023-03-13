@@ -7,13 +7,14 @@ class RestaurantTestCase(TestCase):
 
     def setUp(self):
         self.cuisines = CuisinesFactory()
-        self.restaurant = RestaurantFactory(cuisines=self.cuisines)
+        self.restaurant = RestaurantFactory()
+        self.restaurant.cuisines.set([self.cuisines])
 
     def test_restaurant_str(self):
         self.assertEqual(str(self.restaurant), self.restaurant.title)
 
     def test_restaurant_with_cuisines(self):
-        self.assertEqual(self.restaurant.cuisines, self.cuisines)
+        self.assertTrue(self.restaurant.cuisines.exists())
         self.assertIn(self.restaurant, self.cuisines.restaurants_cuisines.all())
 
     def test_cuisines_count(self):

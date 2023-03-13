@@ -3,10 +3,16 @@ from django.contrib.gis import admin as geoadmin
 from .models import Restaurant, Cuisines, Dishes
 
 
+class CuisinesInline(admin.TabularInline):
+    """inline filed cuisines for restaurant list display"""
+    model = Restaurant.cuisines.through
+
+
 class RestaurantAdmin(geoadmin.OSMGeoAdmin):
     """add restaurant model to dashboard admin"""
 
-    list_display = ["title", "description", "status", "cuisines", "email"]
+    list_display = ["title", "description", "status", "email"]
+    inlines = [CuisinesInline]
 
 
 class CuisinesAdmin(admin.ModelAdmin):

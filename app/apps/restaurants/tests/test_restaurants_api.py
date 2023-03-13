@@ -30,6 +30,7 @@ class RestaurantListViewTestCase(TestCase):
             location=Point(1, 1),
             cuisines=self.cuisines1,
         )
+        self.restaurant1.cuisines.set([self.cuisines1])
 
         self.restaurant2 = RestaurantFactory(
             title="Restaurant2",

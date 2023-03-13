@@ -41,11 +41,10 @@ class Restaurant(models.Model):
         default=timezone.now, verbose_name=_("Creation date")
     )
 
-    cuisines = models.ForeignKey(
+    cuisines = models.ManyToManyField(
         Cuisines,
         verbose_name=_("Cuisines"),
         related_name="restaurants_cuisines",
-        on_delete=models.CASCADE,
         blank=True,
         null=True,
     )

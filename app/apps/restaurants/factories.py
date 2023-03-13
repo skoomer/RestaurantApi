@@ -30,7 +30,7 @@ class RestaurantFactory(factory.django.DjangoModelFactory):
     status = Restaurant.STATUS.open
     creation_date = factory.LazyFunction(timezone.now)
     email = factory.LazyAttribute(lambda o: "%s@example.org" % o.title)
-    cuisines = factory.SubFactory(CuisinesFactory)
+    cuisines = factory.RelatedFactoryList(CuisinesFactory, size=3)
 
 
 class DishesFactory(factory.django.DjangoModelFactory):
