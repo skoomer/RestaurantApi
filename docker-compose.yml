@@ -8,7 +8,7 @@ services:
       - .env
     restart: always
     ports: 
-      - "5435:5436"
+      - "5432:5432"
     logging:
       options:
         max-size: 10m

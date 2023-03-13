@@ -5,17 +5,27 @@ from .models import Restaurant, Cuisines, Dishes
 
 class RestaurantAdmin(geoadmin.OSMGeoAdmin):
     """add restaurant model to dashboard admin"""
-    list_display = ["title", "description", "status", "email"]
+
+    list_display = ["title", "description", "status", "cuisines", "email"]
 
 
 class CuisinesAdmin(admin.ModelAdmin):
     """add cuisines model to dashboard admin"""
-    list_display = ["name", "restaurants"]
+
+    list_display = ["name"]
 
 
 class DishesAdmin(admin.ModelAdmin):
     """add dishes model to dashboard admin"""
-    list_display = ["title", "description", "price", "like", "cuisines"]
+
+    list_display = [
+        "title",
+        "description",
+        "price",
+        "like_user",
+        "restaurants",
+        "cuisines",
+    ]
 
 
 admin.site.register(Restaurant, RestaurantAdmin)

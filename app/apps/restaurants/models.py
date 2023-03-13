@@ -3,10 +3,21 @@ from model_utils import Choices
 from django.contrib.gis.db import models as gis_models
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
+from django.contrib.postgres.fields import ArrayField
+
+
+class Cuisines(models.Model):
+    """model object"""
+
+    name = models.CharField(max_length=100, verbose_name=_("cuisines"))
+
+    def __str__(self):
+        return self.name
 
 
 class Restaurant(models.Model):
     """model object"""
+
     STATUS = Choices("open", "close")
 
     def upload_to(self, filename):
@@ -30,30 +41,40 @@ class Restaurant(models.Model):
         default=timezone.now, verbose_name=_("Creation date")
     )
 
+    cuisines = models.ForeignKey(
+        Cuisines,
+        verbose_name=_("Cuisines"),
+        related_name="restaurants_cuisines",
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+    )
+
     def __str__(self):
         return self.title
 
 
-class Cuisines(models.Model):
-    """model object"""
-    name = models.CharField(max_length=100, verbose_name=_("cuisines"))
-    restaurants = models.ForeignKey(
-        Restaurant,
-        verbose_name=_("Restaurants"),
-        related_name="cuisines",
-        on_delete=models.CASCADE,
-    )
-
-    def __str__(self):
-        return self.name
-
-
 class Dishes(models.Model):
     """model object"""
+
     title = models.CharField(max_length=100, verbose_name=_("Dishes name"))
     description = models.TextField(verbose_name=_("Description"))
     price = models.DecimalField(verbose_name=_("Price"), max_digits=6, decimal_places=2)
-    like = models.IntegerField(verbose_name=_("Like a dishes"), default=0)
+    like_user = ArrayField(
+        models.IntegerField(),
+        default=list,
+        verbose_name=_("Like a dishes"),
+        blank=True,
+        null=True,
+    )
+    restaurants = models.ForeignKey(
+        Restaurant,
+        blank=True,
+        null=True,
+        related_name="dishes_restaurant",
+        on_delete=models.CASCADE,
+        verbose_name=_("Dishes restaurants"),
+    )
     cuisines = models.ForeignKey(
         Cuisines,
         verbose_name=_("Cuisines"),

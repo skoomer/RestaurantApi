@@ -5,9 +5,7 @@ from .models import Restaurant
 from .filters import RestaurantFilter
 
 
-class RestaurantListView(
-    viewsets.GenericViewSet, mixins.ListModelMixin
-):
+class RestaurantListView(viewsets.GenericViewSet, mixins.ListModelMixin):
     """3. Endpoint with list of all restaurants with
     Fields: name, description, location, image, had order
     filtering by cuisines, average price
@@ -20,11 +18,16 @@ class RestaurantListView(
     permission_classes = [permissions.AllowAny]
     lookup_field = "pk"
     filterset_class = RestaurantFilter
-    orderiing_fields = ["cuisines__dishes__price"]
+    search_fields = ["search"]
+    ordering_fields = ["average_price", "distance"]
+    ordering = ["-average_price", "-distance"]
 
     def get_queryset(self):
-        qs = Restaurant.objects.annotate(
-            average_price=Avg("cuisines__dishes__price")
-        ).order_by("average_price")
 
-        return qs
+        queryset = (
+            Restaurant.objects.annotate(average_price=Avg("dishes_restaurant__price"))
+            .order_by("average_price")
+            .distinct()
+        )
+
+        return queryset

@@ -4,6 +4,17 @@ from django.utils import timezone
 from .models import Restaurant, Cuisines, Dishes
 
 
+class CuisinesFactory(factory.django.DjangoModelFactory):
+    """Used to test  Restaurant object"""
+
+    class Meta:
+        """set model object"""
+
+        model = Cuisines
+
+    name = factory.Sequence(lambda n: "Cuisines%s" % n)
+
+
 class RestaurantFactory(factory.django.DjangoModelFactory):
     """Used to test  Restaurant object"""
 
@@ -19,18 +30,7 @@ class RestaurantFactory(factory.django.DjangoModelFactory):
     status = Restaurant.STATUS.open
     creation_date = factory.LazyFunction(timezone.now)
     email = factory.LazyAttribute(lambda o: "%s@example.org" % o.title)
-
-
-class CuisinesFactory(factory.django.DjangoModelFactory):
-    """Used to test  Restaurant object"""
-
-    class Meta:
-        """set model object"""
-
-        model = Cuisines
-
-    name = factory.Sequence(lambda n: "Cuisines%s" % n)
-    restaurants = factory.SubFactory(RestaurantFactory)
+    cuisines = factory.SubFactory(CuisinesFactory)
 
 
 class DishesFactory(factory.django.DjangoModelFactory):
@@ -44,5 +44,6 @@ class DishesFactory(factory.django.DjangoModelFactory):
     title = factory.Sequence(lambda n: "Dishes%s" % n)
     description = "description dishes"
     price = factory.Faker("pydecimal", left_digits=3, right_digits=2, positive=True)
-    like = factory.Faker("random_int", min=0, max=100)
+    like_user = []
     cuisines = factory.SubFactory(CuisinesFactory)
+    restaurants = factory.SubFactory(RestaurantFactory)
