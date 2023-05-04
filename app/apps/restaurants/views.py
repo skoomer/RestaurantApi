@@ -19,15 +19,11 @@ class RestaurantListView(viewsets.GenericViewSet, mixins.ListModelMixin):
     lookup_field = "pk"
     filterset_class = RestaurantFilter
     search_fields = ["search"]
-    ordering_fields = ["average_price", "distance"]
     ordering = ["-average_price", "-distance"]
 
     def get_queryset(self):
-
-        queryset = (
-            Restaurant.objects.annotate(average_price=Avg("dishes_restaurant__price"))
-            .order_by("average_price")
-            .distinct()
-        )
+        queryset = Restaurant.objects.annotate(
+            average_price=Avg("dishes_restaurant__price")
+        ).order_by("average_price")
 
         return queryset

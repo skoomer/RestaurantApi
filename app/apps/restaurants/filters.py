@@ -25,8 +25,16 @@ class RestaurantFilter(filters.FilterSet):
 
     search = filters.CharFilter(method="search_filter", label="Search")
 
+    ordering = filters.OrderingFilter(
+        fields=(
+            ("average_price", "average_price"),
+            ("distance", "distance"),
+        ),
+    )
+
     class Meta:
         """main meta filter class restaurants"""
+
         model = Restaurant
         fields = ["cuisines", "coordinates", "search", "min_price", "max_price"]
 

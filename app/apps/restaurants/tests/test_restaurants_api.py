@@ -5,6 +5,8 @@ from apps.restaurants.factories import RestaurantFactory, CuisinesFactory, Dishe
 from apps.restaurants.models import Restaurant
 from django.contrib.gis.geos import Point
 from apps.restaurants.filters import RestaurantFilter
+from django.db.models import Avg
+from django.contrib.gis.db.models.functions import Distance
 
 
 @pytest.mark.django_db
@@ -55,6 +57,7 @@ class RestaurantListViewTestCase(TestCase):
         self.dish3 = DishesFactory(
             cuisines=self.cuisines3, price=30, restaurants=self.restaurant3
         )
+        self.filter = RestaurantFilter
 
     def test_list_restaurants(self):
         response = self.client.get(self.url_restaurants)
@@ -74,7 +77,7 @@ class RestaurantListViewTestCase(TestCase):
         response = self.client.get(self.url_restaurants, data=data)
         self.assertEqual(response.status_code, 200)
 
-        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["count"], 1)
         self.assertEqual(response.data["results"][0]["title"], self.restaurant2.title)
 
     def test_filter_by_title(self):
@@ -82,33 +85,33 @@ class RestaurantListViewTestCase(TestCase):
         data = {"search": self.restaurant3.title}
         response = self.client.get(self.url_restaurants, data=data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["count"], 1)
         self.assertEqual(response.data["results"][0]["title"], self.restaurant3.title)
 
     def test_filter_by_price_gt(self):
         data = {"min_price": 20.0}
         response = self.client.get(self.url_restaurants, data=data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["count"], 1)
         self.assertEqual(response.data["results"][0]["title"], self.restaurant3.title)
 
     def test_filter_by_price_lt(self):
         data = {"max_price": 20.0}
         response = self.client.get(self.url_restaurants, data=data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["count"], 1)
 
     def test_list_restaurants_filter_by_price_range(self):
         response = self.client.get(
             self.url_restaurants, data={"min_price": 12, "max_price": 22}, format="json"
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["count"], 1)
         self.assertEqual(response.data["results"][0]["title"], self.restaurant2.title)
 
     def test_filter_restaurants_by_coordinates(self):
         query_params = {"coordinates": "2,2"}
-        instance = RestaurantFilter(query_params, queryset=Restaurant.objects.all())
+        instance = self.filter(query_params, queryset=Restaurant.objects.all())
         queryset = instance.qs
 
         self.assertEqual(queryset.count(), 3)
@@ -117,7 +120,45 @@ class RestaurantListViewTestCase(TestCase):
 
     def test_filter_restaurants_by_invalid_coordinates(self):
         query_params = {"coordinates": "invalid"}
-        instance = RestaurantFilter(query_params, queryset=Restaurant.objects.all())
+        instance = self.filter(query_params, queryset=Restaurant.objects.all())
         queryset = instance.qs
 
         self.assertEqual(queryset.count(), 0)
+
+    def test_average_price_ordering(self):
+        queryset = (
+            Restaurant.objects.annotate(average_price=Avg("dishes_restaurant__price"))
+            .order_by("average_price")
+            .distinct()
+        )
+        request = self.client.get(self.url_restaurants, {"ordering": "-average_price"})
+        # create  filter obj
+        instance = self.filter(request, queryset=queryset)
+        filtered_queryset = instance.qs
+
+        self.assertEqual(len(filtered_queryset), len(queryset))
+        #  check change ordering qs - before
+        self.assertEqual(filtered_queryset[0].id, queryset[0].id)
+        # check change ordering qs - after
+        self.assertEqual(filtered_queryset.reverse()[0].id, queryset.reverse()[0].id)
+        self.assertNotEqual(request.data["results"][0]["title"], queryset[0].title)
+
+    def test_distance_ordering(self):
+        user_location = Point(40.7128, -74.0060, srid=4326)
+        queryset = (
+            Restaurant.objects.annotate(
+                average_price=Avg("dishes_restaurant__price"),
+                distance=Distance("location", user_location),
+            )
+            .order_by("distance")
+            .distinct()
+        )
+        request = self.client.get(
+            self.url_restaurants,
+            {"ordering": "distance", "coordinates": "40.7128,-74.0060"},
+        )
+        instance = self.filter(request, queryset=queryset)
+        filtered_queryset = instance.qs
+        self.assertEqual(len(filtered_queryset), len(queryset))
+        self.assertEqual(filtered_queryset[0].id, queryset[0].id)
+        self.assertEqual(filtered_queryset.reverse()[0].id, queryset.reverse()[0].id)
