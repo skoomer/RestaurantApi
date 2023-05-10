@@ -1,5 +1,4 @@
 from django_filters import rest_framework as filters
-from django.db.models import Q
 from django.contrib.gis.geos import Point
 from django.contrib.gis.db.models.functions import Distance
 from .models import Cuisines, Restaurant
@@ -23,8 +22,6 @@ class RestaurantFilter(filters.FilterSet):
 
     coordinates = filters.CharFilter(method="filter_by_distance", label="coordinates")
 
-    search = filters.CharFilter(method="search_filter", label="Search")
-
     ordering = filters.OrderingFilter(
         fields=(
             ("average_price", "average_price"),
@@ -36,12 +33,7 @@ class RestaurantFilter(filters.FilterSet):
         """main meta filter class restaurants"""
 
         model = Restaurant
-        fields = ["cuisines", "coordinates", "search", "min_price", "max_price"]
-
-    def search_filter(self, queryset, name, value):
-        return queryset.filter(
-            Q(title__icontains=value) | Q(description__icontains=value)
-        )
+        fields = ["cuisines", "coordinates", "min_price", "max_price"]
 
     def filter_by_distance(self, queryset, name, value):
         try:
