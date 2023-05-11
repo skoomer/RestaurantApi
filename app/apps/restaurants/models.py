@@ -6,6 +6,15 @@ from django.utils import timezone
 from django.contrib.postgres.fields import ArrayField
 
 
+class Cuisines(models.Model):
+    """model object"""
+
+    name = models.CharField(max_length=100, verbose_name=_("cuisines"))
+
+    def __str__(self):
+        return self.name
+
+
 class Restaurant(models.Model):
     """model object"""
 
@@ -32,23 +41,16 @@ class Restaurant(models.Model):
         default=timezone.now, verbose_name=_("Creation date")
     )
 
-    def __str__(self):
-        return self.title
-
-
-class Cuisines(models.Model):
-    """model object"""
-
-    name = models.CharField(max_length=100, verbose_name=_("cuisines"))
-    restaurants = models.ForeignKey(
-        Restaurant,
-        verbose_name=_("Restaurants"),
-        related_name="cuisines",
-        on_delete=models.CASCADE,
+    cuisines = models.ManyToManyField(
+        Cuisines,
+        verbose_name=_("Cuisines"),
+        related_name="restaurants_cuisines",
+        blank=True,
+        null=True,
     )
 
     def __str__(self):
-        return self.name
+        return self.title
 
 
 class Dishes(models.Model):
@@ -63,6 +65,14 @@ class Dishes(models.Model):
         verbose_name=_("Like a dishes"),
         blank=True,
         null=True,
+    )
+    restaurants = models.ForeignKey(
+        Restaurant,
+        blank=True,
+        null=True,
+        related_name="dishes_restaurant",
+        on_delete=models.CASCADE,
+        verbose_name=_("Dishes restaurants"),
     )
     cuisines = models.ForeignKey(
         Cuisines,
