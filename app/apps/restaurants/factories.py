@@ -1,22 +1,7 @@
 import factory
 from django.contrib.gis.geos import Point
+from django.utils import timezone
 from .models import Restaurant, Cuisines, Dishes
-
-
-class RestaurantFactory(factory.django.DjangoModelFactory):
-    """Used to test  Restaurant object"""
-
-    class Meta:
-        """set model object"""
-
-        model = Restaurant
-
-    title = "test"
-    description = "description restaurant"
-    photo = factory.django.ImageField(color="blue")
-    location = Point(10.0, 20.0)
-    status = Restaurant.STATUS.open
-    email = factory.LazyAttribute(lambda o: "%s@example.org" % o.title)
 
 
 class CuisinesFactory(factory.django.DjangoModelFactory):
@@ -27,8 +12,25 @@ class CuisinesFactory(factory.django.DjangoModelFactory):
 
         model = Cuisines
 
-    name = "test_cuisines"
-    restaurants = factory.SubFactory(RestaurantFactory)
+    name = factory.Sequence(lambda n: "Cuisines%s" % n)
+
+
+class RestaurantFactory(factory.django.DjangoModelFactory):
+    """Used to test  Restaurant object"""
+
+    class Meta:
+        """set model object"""
+
+        model = Restaurant
+
+    title = factory.Sequence(lambda n: "Restaurant%s" % n)
+    description = factory.Sequence(lambda n: "Description%s" % n)
+    photo = factory.django.ImageField(color="blue")
+    location = Point(10.0, 20.0)
+    status = Restaurant.STATUS.open
+    creation_date = factory.LazyFunction(timezone.now)
+    email = factory.LazyAttribute(lambda o: "%s@example.org" % o.title)
+    cuisines = factory.RelatedFactoryList(CuisinesFactory, size=3)
 
 
 class DishesFactory(factory.django.DjangoModelFactory):
@@ -39,8 +41,9 @@ class DishesFactory(factory.django.DjangoModelFactory):
 
         model = Dishes
 
-    title = "test_dishes"
+    title = factory.Sequence(lambda n: "Dishes%s" % n)
     description = "description dishes"
     price = factory.Faker("pydecimal", left_digits=3, right_digits=2, positive=True)
-    like = factory.Faker("random_int", min=0, max=100)
+    like_user = []
     cuisines = factory.SubFactory(CuisinesFactory)
+    restaurants = factory.SubFactory(RestaurantFactory)
