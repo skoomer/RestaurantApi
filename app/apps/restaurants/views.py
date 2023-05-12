@@ -27,11 +27,11 @@ class RestaurantListView(
     ordering = ["-average_price", "-distance"]
 
     def get_queryset(self):
-        qs = Restaurant.objects.annotate(
-            average_price=Avg("cuisines__dishes__price")
+        queryset = Restaurant.objects.annotate(
+            average_price=Avg("dishes_restaurant__price")
         ).order_by("average_price")
 
-        return qs
+        return queryset
 
     def get_serializer_class(self):
         """on assignment. in the detailed information

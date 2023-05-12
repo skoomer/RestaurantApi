@@ -5,7 +5,6 @@ from .models import Restaurant, Cuisines, Dishes
 
 class CuisinesInline(admin.TabularInline):
     """inline filed cuisines for restaurant list display"""
-
     model = Restaurant.cuisines.through
 
 

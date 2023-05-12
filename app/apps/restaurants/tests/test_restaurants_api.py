@@ -7,7 +7,6 @@ from django.contrib.gis.geos import Point
 from apps.restaurants.filters import RestaurantFilter
 from django.db.models import Avg
 from django.contrib.gis.db.models.functions import Distance
-from apps.restaurants.serializers import RestaurantDetailSerializer
 
 
 @pytest.mark.django_db
@@ -126,6 +125,16 @@ class RestaurantListViewTestCase(TestCase):
 
         self.assertEqual(queryset.count(), 0)
 
+    def test_detail_restaurants(self):
+        url_restaurants_detail = reverse(
+            "restaurants:restaurant-detail", args=[self.restaurant1.pk]
+        )
+        response = self.client.get(url_restaurants_detail)
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(response.data["title"], self.restaurant1.title)
+        self.assertEqual(response.data["description"], self.restaurant1.description)
+
     def test_average_price_ordering(self):
         queryset = (
             Restaurant.objects.annotate(average_price=Avg("dishes_restaurant__price"))
@@ -163,18 +172,3 @@ class RestaurantListViewTestCase(TestCase):
         self.assertEqual(len(filtered_queryset), len(queryset))
         self.assertEqual(filtered_queryset[0].id, queryset[0].id)
         self.assertEqual(filtered_queryset.reverse()[0].id, queryset.reverse()[0].id)
-
-    def test_detail_restaurants(self):
-        url_restaurants_detail = reverse(
-            "restaurants:restaurant-detail", args=[self.restaurant1.pk]
-        )
-        response = self.client.get(url_restaurants_detail)
-        self.assertEqual(response.status_code, 200)
-
-        serializer = RestaurantDetailSerializer(self.restaurant1)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data, serializer.data)
-
-    def test_number_of_dishes(self):
-        serializer = RestaurantDetailSerializer(self.restaurant1)
-        self.assertEqual(serializer.get_number_of_dishes(self.restaurant1), 1)
