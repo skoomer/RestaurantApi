@@ -4,21 +4,20 @@ from .models import Restaurant, Cuisines, Dishes
 
 
 class DishesSerializer(serializers.ModelSerializer):
-    """dishes serializer"""
+    """Main serializer.used in restaurants, filters ,cuisines"""
 
     price = serializers.DecimalField(max_digits=6, decimal_places=2)
-    cuisines_name = serializers.ReadOnlyField(source="cuisines.name")
 
     class Meta:
         """set fields , models serializers"""
 
         model = Dishes
-        fields = ["title", "description", "price", "like_user", "cuisines_name"]
-        read_only_fields = ["title", "description", "price", "cuisines_name"]
+        fields = ["title", "description", "price", "like", "cuisines"]
 
 
 class CuisinesSerializer(serializers.ModelSerializer):
-    """cuisines serializer"""
+    """Main serializers for cuisines.Used in restaurants,cuisines list,
+    used in filters"""
 
     dishes = DishesSerializer(many=True, read_only=True)
 
@@ -30,7 +29,7 @@ class CuisinesSerializer(serializers.ModelSerializer):
 
 
 class RestaurantListSerializer(serializers.ModelSerializer):
-    """restaurant serializer"""
+    """Main serializers for restaurant.Used in restaurant list,detail inf, filters, orders"""
 
     class Meta:
         """set fields , models serializers"""
