@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.db.models import Count, Sum
 from .models import Restaurant, Cuisines, Dishes
 
 
@@ -40,3 +41,24 @@ class RestaurantListSerializer(serializers.ModelSerializer):
             "photo",
             "location",
         ]
+
+
+class RestaurantDetailSerializer(RestaurantListSerializer):
+    """Detail info for restaurants"""
+
+    number_of_dishes = serializers.SerializerMethodField()
+
+    class Meta(RestaurantListSerializer.Meta):
+        """set fields , models serializers"""
+
+        fields = RestaurantListSerializer.Meta.fields + [
+            "creation_date",
+            "number_of_dishes",
+        ]
+
+    def get_number_of_dishes(self, obj):
+        return (
+            obj.cuisines.all()
+            .annotate(numb_dishes=Count("dishes"))
+            .aggregate(total=Sum("numb_dishes"))["total"] or 0
+        )

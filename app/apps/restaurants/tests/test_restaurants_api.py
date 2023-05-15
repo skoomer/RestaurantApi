@@ -125,6 +125,16 @@ class RestaurantListViewTestCase(TestCase):
 
         self.assertEqual(queryset.count(), 0)
 
+    def test_detail_restaurants(self):
+        url_restaurants_detail = reverse(
+            "restaurants:restaurant-detail", args=[self.restaurant1.pk]
+        )
+        response = self.client.get(url_restaurants_detail)
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(response.data["title"], self.restaurant1.title)
+        self.assertEqual(response.data["description"], self.restaurant1.description)
+
     def test_average_price_ordering(self):
         queryset = (
             Restaurant.objects.annotate(average_price=Avg("dishes_restaurant__price"))

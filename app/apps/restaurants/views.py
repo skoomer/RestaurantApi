@@ -2,12 +2,14 @@ from rest_framework import viewsets, permissions, mixins
 from django.db.models import Avg
 from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
-from .serializers import RestaurantListSerializer
+from .serializers import RestaurantListSerializer, RestaurantDetailSerializer
 from .models import Restaurant
 from .filters import RestaurantFilter
 
 
-class RestaurantListView(viewsets.GenericViewSet, mixins.ListModelMixin):
+class RestaurantListView(
+    viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin
+):
     """3. Endpoint with list of all restaurants with
     Fields: name, description, location, image, had order
     filtering by cuisines, average price
@@ -30,3 +32,11 @@ class RestaurantListView(viewsets.GenericViewSet, mixins.ListModelMixin):
         ).order_by("average_price")
 
         return queryset
+
+    def get_serializer_class(self):
+        """on assignment. in the detailed information
+        about the restaurant,
+        you need to show an additional field"""
+        if self.action == "retrieve":
+            return RestaurantDetailSerializer
+        return RestaurantListSerializer
