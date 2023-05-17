@@ -1,10 +1,14 @@
 from rest_framework import viewsets, permissions, mixins
 from django.db.models import Avg
-from rest_framework.filters import SearchFilter
+from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
-from .serializers import RestaurantListSerializer, RestaurantDetailSerializer
-from .models import Restaurant
-from .filters import RestaurantFilter
+from .serializers import (
+    RestaurantListSerializer,
+    RestaurantDetailSerializer,
+    DishesSerializer,
+)
+from .models import Restaurant, Dishes
+from .filters import RestaurantFilter, DishesFilterSet
 
 
 class RestaurantListView(
@@ -40,3 +44,33 @@ class RestaurantListView(
         if self.action == "retrieve":
             return RestaurantDetailSerializer
         return RestaurantListSerializer
+
+
+class MenuEndpointViews(
+    viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin
+):
+    """5. Endpoint with menu of a certain restaurant
+    list of all available dishes in menu
+    add filters by cuisine
+    search by title and description
+    ordering by price
+    available only for logged in users
+    Leave a like to a dish"""
+
+    serializer_class = DishesSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [
+        DjangoFilterBackend,
+        OrderingFilter,
+        SearchFilter,
+    ]
+
+    filterset_class = DishesFilterSet
+    ordering_fields = ["price"]
+    search_fields = ["title", "description"]
+    lookup_field = "pk"
+
+    def get_queryset(self):
+        restaurant_id = self.kwargs["restaurant_pk"]
+        queryset = Dishes.objects.filter(restaurants_id=restaurant_id)
+        return queryset

@@ -1,7 +1,7 @@
 from django_filters import rest_framework as filters
 from django.contrib.gis.geos import Point
 from django.contrib.gis.db.models.functions import Distance
-from .models import Cuisines, Restaurant
+from .models import Cuisines, Restaurant, Dishes
 
 
 class RestaurantFilter(filters.FilterSet):
@@ -46,3 +46,18 @@ class RestaurantFilter(filters.FilterSet):
             .order_by("distance")
             .distinct()
         )
+
+
+class DishesFilterSet(filters.FilterSet):
+    """filters for menu by cuisines
+
+    Args:
+        filters cuisines: return cuisines
+    """
+
+    cuisines = filters.CharFilter(field_name="cuisines__name")
+
+    class Meta:
+        """main meta filter class views MenuEndpointViews"""
+        model = Dishes
+        fields = ["cuisines"]
