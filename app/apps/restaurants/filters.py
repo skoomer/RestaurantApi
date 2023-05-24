@@ -55,7 +55,11 @@ class DishesFilterSet(filters.FilterSet):
         filters cuisines: return cuisines
     """
 
-    cuisines = filters.CharFilter(field_name="cuisines__name")
+    cuisines = filters.ModelMultipleChoiceFilter(
+        queryset=Cuisines.objects.all(),
+        field_name="cuisines__name",
+        to_field_name="name",
+    )
 
     class Meta:
         """main meta filter class views MenuEndpointViews"""

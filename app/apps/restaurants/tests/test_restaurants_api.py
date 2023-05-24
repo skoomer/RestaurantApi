@@ -194,10 +194,40 @@ class RestaurantListViewTestCase(TestCase):
         )
 
         response = self.client.get(url_restaurants_menu)
+        menu = response.data["results"][0]
+
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
-            response.data["results"][0]["title"],
+            menu["title"],
             self.restaurant1.dishes_restaurant.get(
-                title=response.data["results"][0]["title"]
+                title=menu["title"],
+                description=menu["description"],
+                price=menu["price"],
+                like_user=menu["like_user"],
+                cuisines_id=menu["cuisines"],
             ).title,
         )
+
+    def test_menu_restaurant_filter(self):
+
+        data = {"cuisines": self.cuisines1.name}
+        url_restaurants_menu = reverse(
+            "restaurants:cuisines-menu-list", args=[self.restaurant1.pk]
+        )
+        response = self.client.get(url_restaurants_menu, data=data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(
+            response.data["results"][0]["cuisines"],
+            self.restaurant1.cuisines.get(id=self.cuisines1.id).id,
+        )
+
+    def test_get_menu_only_auth(self):
+        self.client.logout()
+        url_restaurants_menu = reverse(
+            "restaurants:cuisines-menu-list", args=[self.restaurant1.pk]
+        )
+
+        response = self.client.get(url_restaurants_menu)
+
+        self.assertEqual(response.status_code, 403)
