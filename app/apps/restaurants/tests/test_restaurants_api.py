@@ -210,7 +210,7 @@ class RestaurantListViewTestCase(TestCase):
 
     def test_menu_restaurant_filter(self):
 
-        data = {"cuisines": self.cuisines1.name}
+        data = {"cuisines": self.cuisines1.id}
         url_restaurants_menu = reverse(
             "restaurants:cuisines-menu-list", args=[self.restaurant1.pk]
         )

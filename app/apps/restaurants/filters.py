@@ -57,8 +57,8 @@ class DishesFilterSet(filters.FilterSet):
 
     cuisines = filters.ModelMultipleChoiceFilter(
         queryset=Cuisines.objects.all(),
-        field_name="cuisines__name",
-        to_field_name="name",
+        field_name="cuisines__id",
+        to_field_name="id",
     )
 
     class Meta:
