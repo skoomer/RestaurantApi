@@ -1,4 +1,5 @@
 import pytest
+import factory
 from django.test import TestCase
 from django.urls import reverse
 from apps.restaurants.factories import RestaurantFactory, CuisinesFactory, DishesFactory
@@ -7,6 +8,7 @@ from django.contrib.gis.geos import Point
 from apps.restaurants.filters import RestaurantFilter
 from django.db.models import Avg
 from django.contrib.gis.db.models.functions import Distance
+from apps.accounts.factories import UserFactory
 
 
 @pytest.mark.django_db
@@ -58,6 +60,19 @@ class RestaurantListViewTestCase(TestCase):
             cuisines=self.cuisines3, price=30, restaurants=self.restaurant3
         )
         self.filter = RestaurantFilter
+        self.data_login = {
+            "email": "testgmail@mail.com",
+            "password": "password1245",
+        }
+        self.user = UserFactory(
+            email=self.data_login["email"],
+            password=factory.PostGenerationMethodCall(
+                "set_password", self.data_login["password"]
+            ),
+        )
+        self.user_login = self.client.login(
+            username=self.data_login["email"], password=self.data_login["password"]
+        )
 
     def test_list_restaurants(self):
         response = self.client.get(self.url_restaurants)
@@ -172,3 +187,47 @@ class RestaurantListViewTestCase(TestCase):
         self.assertEqual(len(filtered_queryset), len(queryset))
         self.assertEqual(filtered_queryset[0].id, queryset[0].id)
         self.assertEqual(filtered_queryset.reverse()[0].id, queryset.reverse()[0].id)
+
+    def test_get_menu_restaurant(self):
+        url_restaurants_menu = reverse(
+            "restaurants:cuisines-menu-list", args=[self.restaurant1.pk]
+        )
+
+        response = self.client.get(url_restaurants_menu)
+        menu = response.data["results"][0]
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            menu["title"],
+            self.restaurant1.dishes_restaurant.get(
+                title=menu["title"],
+                description=menu["description"],
+                price=menu["price"],
+                like_user=menu["like_user"],
+                cuisines_id=menu["cuisines"],
+            ).title,
+        )
+
+    def test_menu_restaurant_filter(self):
+
+        data = {"cuisines": self.cuisines1.id}
+        url_restaurants_menu = reverse(
+            "restaurants:cuisines-menu-list", args=[self.restaurant1.pk]
+        )
+        response = self.client.get(url_restaurants_menu, data=data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(
+            response.data["results"][0]["cuisines"],
+            self.restaurant1.cuisines.get(id=self.cuisines1.id).id,
+        )
+
+    def test_get_menu_only_auth(self):
+        self.client.logout()
+        url_restaurants_menu = reverse(
+            "restaurants:cuisines-menu-list", args=[self.restaurant1.pk]
+        )
+
+        response = self.client.get(url_restaurants_menu)
+
+        self.assertEqual(response.status_code, 403)

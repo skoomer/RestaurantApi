@@ -12,7 +12,7 @@ class DishesSerializer(serializers.ModelSerializer):
         """set fields , models serializers"""
 
         model = Dishes
-        fields = ["title", "description", "price", "like", "cuisines"]
+        fields = ["title", "description", "price", "like_user", "cuisines"]
 
 
 class CuisinesSerializer(serializers.ModelSerializer):
