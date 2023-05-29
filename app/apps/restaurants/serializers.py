@@ -13,6 +13,7 @@ class DishesSerializer(serializers.ModelSerializer):
 
         model = Dishes
         fields = ["title", "description", "price", "like_user", "cuisines"]
+        read_only_fields = ["title", "description", "price", "cuisines"]
 
 
 class CuisinesSerializer(serializers.ModelSerializer):

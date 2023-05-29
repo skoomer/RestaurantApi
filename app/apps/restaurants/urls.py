@@ -13,4 +13,14 @@ router.register(r'restaurants/(?P<restaurant_pk>\d+)/menu', MenuEndpointViews, b
 
 urlpatterns = [
     path("", include(router.urls)),
+
+    path(
+        "restaurants/<int:pk>/menu/<int:dish_pk>/like/",
+        MenuEndpointViews.as_view(
+            {
+                "post": "like_dish",
+            }
+        ),
+        name="like_dish",
+    ),
 ]

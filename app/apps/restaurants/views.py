@@ -1,5 +1,8 @@
 from rest_framework import viewsets, permissions, mixins
+from django.shortcuts import get_object_or_404, redirect
 from django.db.models import Avg
+from rest_framework.response import Response
+from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from .serializers import (
@@ -74,3 +77,21 @@ class MenuEndpointViews(
         restaurant_id = self.kwargs["restaurant_pk"]
         queryset = Dishes.objects.filter(restaurants_id=restaurant_id)
         return queryset
+
+    @action(detail=True, methods=["post"])
+    def like_dish(self, request, pk=None, dish_pk=None):
+        if not self.request.user.is_authenticated:
+            # Redirect to login
+            return redirect("rest_login")
+
+        dish = get_object_or_404(Dishes, pk=dish_pk)
+        user = self.request.user.id
+
+        if user in dish.like_user:
+            # User has already liked the dish
+            return Response({"detail": "You have already liked this dish."})
+
+        dish.like_user.append(user)
+        dish.save()
+        serializer = DishesSerializer(dish)
+        return Response(serializer.data)
