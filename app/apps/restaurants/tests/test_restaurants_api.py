@@ -235,7 +235,8 @@ class RestaurantListViewTestCase(TestCase):
 
     def test_user_set_like_dish(self):
         url_like_dish = reverse(
-            "restaurants:like_dish", args=[self.restaurant1.id, self.dish1.pk]
+            "restaurants:cuisines-menu-like-dish",
+            args=[self.dish1.restaurants.id, self.dish1.pk],
         )
         self.assertEqual(len(self.dish1.like_user), 0)
 
@@ -244,9 +245,9 @@ class RestaurantListViewTestCase(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data["like_user"]), 1)
-
+        # unlike
         response = self.client.post(url_like_dish)
-        self.assertEqual(response.data["detail"], "You have already liked this dish.")
+        self.assertEqual(response.data["detail"], "you canceled your like")
 
     def test_get_dishes_detail(self):
         url_dishes_detail = reverse(

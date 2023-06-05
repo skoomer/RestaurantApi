@@ -1,5 +1,5 @@
 from rest_framework import viewsets, permissions, mixins
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import redirect
 from django.db.models import Avg
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -79,17 +79,19 @@ class MenuEndpointViews(
         return queryset
 
     @action(detail=True, methods=["post"])
-    def like_dish(self, request, pk=None, dish_pk=None):
+    def like_dish(self, request, restaurant_pk=None, pk=None):
+        """action  set user like and return  quantity likes"""
         if not self.request.user.is_authenticated:
             # Redirect to login
             return redirect("rest_login")
 
-        dish = get_object_or_404(Dishes, pk=dish_pk)
+        dish = self.get_object()
         user = self.request.user.id
 
         if user in dish.like_user:
-            # User has already liked the dish
-            return Response({"detail": "You have already liked this dish."})
+            dish.like_user.remove(user)
+            dish.save()
+            return Response({"detail": "you canceled your like"})
 
         dish.like_user.append(user)
         dish.save()
