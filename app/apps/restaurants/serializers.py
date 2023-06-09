@@ -6,13 +6,14 @@ from .models import Restaurant, Cuisines, Dishes
 class DishesSerializer(serializers.ModelSerializer):
     """Main serializer.used in restaurants, filters ,cuisines"""
 
-    price = serializers.DecimalField(max_digits=6, decimal_places=2)
+    price = serializers.DecimalField(max_digits=6, decimal_places=2, read_only=True)
 
     class Meta:
         """set fields , models serializers"""
 
         model = Dishes
         fields = ["title", "description", "price", "like_user", "cuisines"]
+        read_only_fields = ["title", "description", "cuisines"]
 
 
 class CuisinesSerializer(serializers.ModelSerializer):
