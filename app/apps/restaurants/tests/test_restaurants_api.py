@@ -2,6 +2,7 @@ import pytest
 import factory
 from django.test import TestCase
 from django.urls import reverse
+from rest_framework.test import force_authenticate
 from apps.restaurants.factories import RestaurantFactory, CuisinesFactory, DishesFactory
 from apps.restaurants.models import Restaurant
 from django.contrib.gis.geos import Point
@@ -231,3 +232,28 @@ class RestaurantListViewTestCase(TestCase):
         response = self.client.get(url_restaurants_menu)
 
         self.assertEqual(response.status_code, 403)
+
+    def test_user_set_like_dish(self):
+        url_like_dish = reverse(
+            "restaurants:cuisines-menu-like-dish",
+            args=[self.dish1.restaurants.id, self.dish1.pk],
+        )
+        self.assertEqual(len(self.dish1.like_user), 0)
+
+        response = self.client.post(url_like_dish)
+        force_authenticate(response, user=self.user)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data["like_user"]), 1)
+        # unlike
+        response = self.client.post(url_like_dish)
+        self.assertEqual(response.data["detail"], "you canceled your like")
+
+    def test_get_dishes_detail(self):
+        url_dishes_detail = reverse(
+            "restaurants:cuisines-menu-detail",
+            args=[self.restaurant1.id, self.dish1.pk],
+        )
+        response = self.client.get(url_dishes_detail)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["title"], self.dish1.title)

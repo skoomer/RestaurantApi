@@ -1,5 +1,8 @@
 from rest_framework import viewsets, permissions, mixins
+from django.shortcuts import redirect
 from django.db.models import Avg
+from rest_framework.response import Response
+from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from .serializers import (
@@ -74,3 +77,23 @@ class MenuEndpointViews(
         restaurant_id = self.kwargs["restaurant_pk"]
         queryset = Dishes.objects.filter(restaurants_id=restaurant_id)
         return queryset
+
+    @action(detail=True, methods=["post"])
+    def like_dish(self, request, restaurant_pk=None, pk=None):
+        """action  set user like and return  quantity likes"""
+        if not self.request.user.is_authenticated:
+            # Redirect to login
+            return redirect("rest_login")
+
+        dish = self.get_object()
+        user = self.request.user.id
+
+        if user in dish.like_user:
+            dish.like_user.remove(user)
+            dish.save()
+            return Response({"detail": "you canceled your like"})
+
+        dish.like_user.append(user)
+        dish.save()
+        serializer = DishesSerializer(dish)
+        return Response(serializer.data)
