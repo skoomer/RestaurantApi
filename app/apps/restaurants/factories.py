@@ -1,7 +1,8 @@
 import factory
 from django.contrib.gis.geos import Point
 from django.utils import timezone
-from .models import Restaurant, Cuisines, Dishes
+from apps.accounts.factories import UserFactory
+from .models import Restaurant, Cuisines, Dishes, Review
 
 
 class CuisinesFactory(factory.django.DjangoModelFactory):
@@ -47,3 +48,17 @@ class DishesFactory(factory.django.DjangoModelFactory):
     like_user = []
     cuisines = factory.SubFactory(CuisinesFactory)
     restaurants = factory.SubFactory(RestaurantFactory)
+
+
+class ReviewFactory(factory.django.DjangoModelFactory):
+    """Used to test  Restaurant review object"""
+
+    class Meta:
+        """set model object"""
+
+        model = Review
+
+    reviewer = factory.SubFactory(UserFactory)
+    restaurant = factory.SubFactory(RestaurantFactory)
+    message = "message test"
+    creation_date = factory.LazyFunction(timezone.now)

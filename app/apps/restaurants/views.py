@@ -1,3 +1,4 @@
+from django.urls import reverse
 from rest_framework import viewsets, permissions, mixins
 from django.shortcuts import redirect
 from django.db.models import Avg
@@ -9,8 +10,9 @@ from .serializers import (
     RestaurantListSerializer,
     RestaurantDetailSerializer,
     DishesSerializer,
+    ReviewSerializer,
 )
-from .models import Restaurant, Dishes
+from .models import Restaurant, Dishes, Review
 from .filters import RestaurantFilter, DishesFilterSet
 
 
@@ -97,3 +99,29 @@ class MenuEndpointViews(
         dish.save()
         serializer = DishesSerializer(dish)
         return Response(serializer.data)
+
+
+class ReViewRestaurant(
+    viewsets.GenericViewSet, mixins.CreateModelMixin, mixins.ListModelMixin
+):
+
+    """Endpoint to leave a review about a restaurant"""
+
+    serializer_class = ReviewSerializer
+    permission_classes = [permissions.AllowAny]
+    lookup_field = "pk"
+    ordering = ["created_at"]
+
+    def get_queryset(self):
+        restaurant_id = self.kwargs["restaurant_pk"]
+        review = Review.objects.filter(restaurant_id=restaurant_id)
+        return review
+
+    def perform_create(self, serializer):
+        restaurant_id = self.kwargs["restaurant_pk"]
+        url = reverse("restaurants:restaurant-review-list", args=[restaurant_id])
+        serializer.validated_data["reviewer"] = self.request.user
+        serializer.validated_data["restaurant_id"] = restaurant_id
+        serializer.save()
+
+        return redirect(url)
