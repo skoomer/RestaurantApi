@@ -39,6 +39,8 @@ class TestReviewRestaurant(TestCase):
         response = self.client.get(self.url_restaurants)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["count"], 3)
+        self.assertEqual(response.data["results"][0]["message"], self.review.message)
+        self.assertEqual(response.data["results"][0]["reviewer"]["email"], self.user.email)
 
     def test_post_review_to_restaurant(self):
         data_review = {"message": "test message post"}

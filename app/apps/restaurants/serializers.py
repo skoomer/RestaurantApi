@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.db.models import Count, Sum
+from apps.accounts.serializers import UserSerializer
 from .models import Restaurant, Cuisines, Dishes, Review
 
 
@@ -70,12 +71,10 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     message = serializers.CharField(max_length=200)
     creation_date = serializers.DateTimeField(read_only=True)
-    reviewer_first_name = serializers.CharField(
-        source="reviewer.first_name", read_only=True
-    )
+    reviewer = UserSerializer(read_only=True)
 
     class Meta:
         """set fields , models serializers"""
 
         model = Review
-        fields = ["reviewer_first_name", "message", "creation_date"]
+        fields = ["reviewer", "message", "creation_date"]

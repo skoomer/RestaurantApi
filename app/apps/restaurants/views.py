@@ -1,4 +1,3 @@
-from django.urls import reverse
 from rest_framework import viewsets, permissions, mixins
 from django.shortcuts import redirect
 from django.db.models import Avg
@@ -119,9 +118,4 @@ class ReViewRestaurant(
 
     def perform_create(self, serializer):
         restaurant_id = self.kwargs["restaurant_pk"]
-        url = reverse("restaurants:restaurant-review-list", args=[restaurant_id])
-        serializer.validated_data["reviewer"] = self.request.user
-        serializer.validated_data["restaurant_id"] = restaurant_id
-        serializer.save()
-
-        return redirect(url)
+        serializer.save(reviewer=self.request.user, restaurant_id=restaurant_id)
