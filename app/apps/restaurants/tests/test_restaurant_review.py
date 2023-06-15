@@ -28,9 +28,6 @@ class TestReviewRestaurant(TestCase):
                 "set_password", self.data_login["password"]
             ),
         )
-        self.user_login = self.client.login(
-            username=self.data_login["email"], password=self.data_login["password"]
-        )
 
     def test_get_restaurant_reviews(self):
         self.review.create_batch(
@@ -43,6 +40,7 @@ class TestReviewRestaurant(TestCase):
         self.assertEqual(response.data["results"][0]["reviewer"]["email"], self.user.email)
 
     def test_post_review_to_restaurant(self):
+        self.client.force_login(self.user)
         data_review = {"message": "test message post"}
         response = self.client.post(self.url_restaurants, data_review)
         self.assertEqual(response.status_code, 201)
