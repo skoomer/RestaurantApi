@@ -1,10 +1,14 @@
-from rest_framework import viewsets, permissions, mixins
+from rest_framework import viewsets, permissions, mixins, status
 from django.shortcuts import redirect
 from django.db.models import Avg
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
+from django.core.mail import send_mail
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
+from .permission import IsReviewOwner
 from .serializers import (
     RestaurantListSerializer,
     RestaurantDetailSerializer,
@@ -107,7 +111,7 @@ class ReViewRestaurant(
     """Endpoint to leave a review about a restaurant"""
 
     serializer_class = ReviewSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.AllowAny, IsReviewOwner]
     lookup_field = "pk"
     ordering = ["created_at"]
 
@@ -117,5 +121,26 @@ class ReViewRestaurant(
         return review
 
     def perform_create(self, serializer):
+        anonymous = self.request.user.is_authenticated
         restaurant_id = self.kwargs["restaurant_pk"]
-        serializer.save(reviewer=self.request.user, restaurant_id=restaurant_id)
+
+        if anonymous is False:
+            serializer.save(reviewer=None, restaurant_id=restaurant_id)
+        else:
+            serializer.save(reviewer=self.request.user, restaurant_id=restaurant_id)
+
+    def destroy(self, request, pk=None, restaurant_pk=None, pk_review=None):
+        review = self.get_object()
+        review.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @receiver(pre_delete, sender=Review)
+    def send_email_review_deleted_notification(self, sender, instance, **kwargs):
+        """Send notification to user after their review has been deleted"""
+        user_email = instance.reviewer.email
+        send_mail(
+            subject="Your review has been deleted",
+            message=f"Your review {instance.message} of {instance.restaurant} has been deleted.",
+            from_email=None,
+            recipient_list=[user_email],
+        )
