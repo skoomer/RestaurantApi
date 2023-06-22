@@ -25,6 +25,7 @@ ignore=CVS,
        migrations,
        locustfile.py,
         .*/migrations/*,
+        apps.py,
 
  
 
