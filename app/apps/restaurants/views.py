@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
+from .permission import IsReviewOwner
 from .serializers import (
     RestaurantListSerializer,
     RestaurantDetailSerializer,
@@ -101,13 +102,16 @@ class MenuEndpointViews(
 
 
 class ReViewRestaurant(
-    viewsets.GenericViewSet, mixins.CreateModelMixin, mixins.ListModelMixin
+    viewsets.GenericViewSet,
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
 ):
 
     """Endpoint to leave a review about a restaurant"""
 
     serializer_class = ReviewSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.AllowAny, IsReviewOwner]
     lookup_field = "pk"
     ordering = ["created_at"]
 
@@ -117,5 +121,10 @@ class ReViewRestaurant(
         return review
 
     def perform_create(self, serializer):
+        anonymous = self.request.user.is_authenticated
         restaurant_id = self.kwargs["restaurant_pk"]
-        serializer.save(reviewer=self.request.user, restaurant_id=restaurant_id)
+
+        if anonymous is False:
+            serializer.save(reviewer=None, restaurant_id=restaurant_id)
+        else:
+            serializer.save(reviewer=self.request.user, restaurant_id=restaurant_id)
