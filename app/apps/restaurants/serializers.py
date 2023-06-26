@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.db.models import Count, Sum
-from .models import Restaurant, Cuisines, Dishes
+from apps.accounts.serializers import UserSerializer
+from .models import Restaurant, Cuisines, Dishes, Review
 
 
 class DishesSerializer(serializers.ModelSerializer):
@@ -63,3 +64,17 @@ class RestaurantDetailSerializer(RestaurantListSerializer):
             .annotate(numb_dishes=Count("dishes"))
             .aggregate(total=Sum("numb_dishes"))["total"] or 0
         )
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    """Main serializers for restaurant review in restaurant"""
+
+    message = serializers.CharField(max_length=200)
+    creation_date = serializers.DateTimeField(read_only=True)
+    reviewer = UserSerializer(read_only=True)
+
+    class Meta:
+        """set fields , models serializers"""
+
+        model = Review
+        fields = ["reviewer", "message", "creation_date"]

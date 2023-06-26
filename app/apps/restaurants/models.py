@@ -4,6 +4,7 @@ from django.contrib.gis.db import models as gis_models
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.contrib.postgres.fields import ArrayField
+from apps.accounts.models import User
 
 
 class Cuisines(models.Model):
@@ -83,3 +84,29 @@ class Dishes(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Review(models.Model):
+    """model object"""
+
+    reviewer = models.ForeignKey(
+        User,
+        related_name="reviewer_user",
+        on_delete=models.CASCADE,
+        verbose_name="Reviewer",
+        blank=True,
+        null=True,
+    )
+    restaurant = models.ForeignKey(
+        Restaurant,
+        related_name="restaurant_review",
+        on_delete=models.CASCADE,
+        verbose_name="Restaurants",
+    )
+    message = models.TextField(verbose_name="User message")
+    creation_date = models.DateTimeField(
+        default=timezone.now, verbose_name=_("Creation date")
+    )
+
+    def __str__(self):
+        return self.reviewer.first_name

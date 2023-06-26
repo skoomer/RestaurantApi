@@ -2,6 +2,10 @@ from django.apps import AppConfig
 
 
 class RestaurantsConfig(AppConfig):
-    '''apps restaurants'''
+    """apps restaurants"""
+
     default_auto_field = "django.db.models.BigAutoField"
-    name = 'apps.restaurants'
+    name = "apps.restaurants"
+
+    def ready(self):
+        import apps.restaurants.signals

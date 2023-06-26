@@ -1,10 +1,17 @@
 from django.contrib import admin
 from django.contrib.gis import admin as geoadmin
-from .models import Restaurant, Cuisines, Dishes
+from .models import Restaurant, Cuisines, Dishes, Review
+
+
+class ReviewAdmin(admin.ModelAdmin):
+    """add review model to dashboard admin"""
+
+    list_display = ["reviewer", "restaurant", "creation_date"]
 
 
 class CuisinesInline(admin.TabularInline):
     """inline filed cuisines for restaurant list display"""
+
     model = Restaurant.cuisines.through
 
 
@@ -37,3 +44,4 @@ class DishesAdmin(admin.ModelAdmin):
 admin.site.register(Restaurant, RestaurantAdmin)
 admin.site.register(Cuisines, CuisinesAdmin)
 admin.site.register(Dishes, DishesAdmin)
+admin.site.register(Review, ReviewAdmin)

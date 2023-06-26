@@ -8,7 +8,8 @@ exclude =
         manage.py,
         */migrations/*,
         settings.py,
-        locustfile.py
+        locustfile.py,
+        apps.py
 ignore = 
         # W503 : line break before binary operator
         W503.
