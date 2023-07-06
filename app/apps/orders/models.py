@@ -12,7 +12,7 @@ class Cart(models.Model):
     customer = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="cart", verbose_name="customer"
     )
-    product = models.ForeignKey(
+    restaurant = models.ForeignKey(
         Restaurant, on_delete=models.CASCADE, related_name="cart", verbose_name="restaurant"
     )
 
@@ -29,11 +29,11 @@ class CartItems(models.Model):
         related_name="cart_items",
         verbose_name="Cart",
     )
-    dishes = models.ForeignKey(
+    dish = models.ForeignKey(
         Dishes,
         on_delete=models.CASCADE,
         related_name="cart_item_dishes",
-        verbose_name="items dishes",
+        verbose_name="dish",
     )
     quantity = models.PositiveIntegerField(verbose_name="quantity dishes")
 

@@ -11,13 +11,13 @@ class OrderAdmin(admin.ModelAdmin):
 class CartAdmin(admin.ModelAdmin):
     """add Cart model to dashboard admin"""
 
-    list_display = ["id", "customer", "product"]
+    list_display = ["id", "customer", "restaurant"]
 
 
 class CartItemsAdmin(admin.ModelAdmin):
     """add CartItems model to dashboard admin"""
 
-    list_display = ["id", "cart", "dishes", "quantity"]
+    list_display = ["id", "cart", "dish", "quantity"]
 
 
 admin.site.register(Order, OrderAdmin)

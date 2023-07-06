@@ -14,7 +14,7 @@ class CartFactory(factory.django.DjangoModelFactory):
         model = Cart
 
     customer = factory.SubFactory(UserFactory)
-    product = factory.SubFactory(RestaurantFactory)
+    restaurant = factory.SubFactory(RestaurantFactory)
 
 
 class CartItemsFactory(factory.django.DjangoModelFactory):
@@ -27,7 +27,7 @@ class CartItemsFactory(factory.django.DjangoModelFactory):
 
     cart = factory.SubFactory(CartFactory)
 
-    dishes = factory.SubFactory(DishesFactory)
+    dish = factory.SubFactory(DishesFactory)
 
     quantity = 0
 
@@ -42,7 +42,7 @@ class OrdersFactory(factory.django.DjangoModelFactory):
 
     status = Order.STATUS.in_processing
     restaurant = factory.SubFactory(RestaurantFactory)
-    costumer = factory.SubFactory(UserFactory)
+    costumer = factory.SubFactory(UserFactory, email=factory.Sequence(lambda n: f'test_email{n}@example.com'))
 
     total_price = 100.00
 
