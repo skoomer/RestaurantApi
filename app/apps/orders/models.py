@@ -6,41 +6,6 @@ from apps.accounts.models import User
 from apps.restaurants.models import Restaurant, Dishes
 
 
-class Cart(models.Model):
-    """model object cart"""
-
-    customer = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="cart", verbose_name="customer"
-    )
-    restaurant = models.ForeignKey(
-        Restaurant, on_delete=models.CASCADE, related_name="cart", verbose_name="restaurant"
-    )
-
-    def __str__(self):
-        return f"Cart {self.id}"
-
-
-class CartItems(models.Model):
-    """model object cart items"""
-
-    cart = models.ForeignKey(
-        Cart,
-        on_delete=models.CASCADE,
-        related_name="cart_items",
-        verbose_name="Cart",
-    )
-    dish = models.ForeignKey(
-        Dishes,
-        on_delete=models.CASCADE,
-        related_name="cart_item_dishes",
-        verbose_name="dish",
-    )
-    quantity = models.PositiveIntegerField(verbose_name="quantity dishes")
-
-    def __str__(self):
-        return f"Cart items {self.id}"
-
-
 class Order(models.Model):
     """model object orders api"""
 
@@ -74,3 +39,45 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Order number {self.id}"
+
+
+class Cart(models.Model):
+    """model object cart"""
+
+    customer = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="cart", verbose_name="customer"
+    )
+    restaurant = models.ForeignKey(
+        Restaurant,
+        on_delete=models.CASCADE,
+        related_name="cart",
+        verbose_name="restaurant",
+    )
+
+    order = models.ForeignKey(
+        Order, on_delete=models.CASCADE, related_name="cart", verbose_name="Cart order"
+    )
+
+    def __str__(self):
+        return f"Cart {self.id}"
+
+
+class CartItems(models.Model):
+    """model object cart items"""
+
+    cart = models.ForeignKey(
+        Cart,
+        on_delete=models.CASCADE,
+        related_name="cart_items",
+        verbose_name="Cart",
+    )
+    dish = models.ForeignKey(
+        Dishes,
+        on_delete=models.CASCADE,
+        related_name="cart_item_dishes",
+        verbose_name="dish",
+    )
+    quantity = models.PositiveIntegerField(verbose_name="quantity dishes")
+
+    def __str__(self):
+        return f"Cart items {self.id}"
