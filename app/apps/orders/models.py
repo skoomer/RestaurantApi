@@ -6,6 +6,23 @@ from apps.accounts.models import User
 from apps.restaurants.models import Restaurant, Dishes
 
 
+class Cart(models.Model):
+    """model object cart"""
+
+    customer = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="cart", verbose_name="customer"
+    )
+    restaurant = models.ForeignKey(
+        Restaurant,
+        on_delete=models.CASCADE,
+        related_name="cart",
+        verbose_name="restaurant",
+    )
+
+    def __str__(self):
+        return f"Cart {self.id}"
+
+
 class Order(models.Model):
     """model object orders api"""
 
@@ -37,29 +54,12 @@ class Order(models.Model):
     address = models.CharField(max_length=200, verbose_name="address delivery")
     costumer_name = models.CharField(verbose_name="costumer name", max_length=100)
 
+    cart = models.ForeignKey(
+        Cart, on_delete=models.CASCADE, related_name="order", verbose_name="Cart order"
+    )
+
     def __str__(self):
         return f"Order number {self.id}"
-
-
-class Cart(models.Model):
-    """model object cart"""
-
-    customer = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="cart", verbose_name="customer"
-    )
-    restaurant = models.ForeignKey(
-        Restaurant,
-        on_delete=models.CASCADE,
-        related_name="cart",
-        verbose_name="restaurant",
-    )
-
-    order = models.ForeignKey(
-        Order, on_delete=models.CASCADE, related_name="cart", verbose_name="Cart order"
-    )
-
-    def __str__(self):
-        return f"Cart {self.id}"
 
 
 class CartItems(models.Model):
