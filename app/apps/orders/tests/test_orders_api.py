@@ -23,9 +23,9 @@ class TestOrdersApi(TestCase):
             ),
         )
 
-        self.orders = OrdersFactory(costumer=self.user)
+        self.cart = CartFactory(customer=self.user)
+        self.orders = OrdersFactory(cart=self.cart, costumer=self.user)
         self.url_order_detail = reverse("orders:orders-detail", args=[self.orders.id])
-        self.cart = CartFactory(order=self.orders, customer=self.user)
         self.cart_items = CartItemsFactory(cart=self.cart)
 
     def test_get_all_orders_user(self):
@@ -49,3 +49,6 @@ class TestOrdersApi(TestCase):
         )
 
         self.assertEqual(float(response.data["total_price"]), self.orders.total_price)
+
+    def test_create_cart(self):
+        pass

@@ -42,10 +42,13 @@ class OrdersFactory(factory.django.DjangoModelFactory):
 
     status = Order.STATUS.in_processing
     restaurant = factory.SubFactory(RestaurantFactory)
-    costumer = factory.SubFactory(UserFactory, email=factory.Sequence(lambda n: f'test_email{n}@example.com'))
+    costumer = factory.SubFactory(
+        UserFactory, email=factory.Sequence(lambda n: f"test_email{n}@example.com")
+    )
 
     total_price = 100.00
 
     address = "street : test , house : 10, city : Test"
     creation_date = factory.LazyFunction(timezone.now)
     costumer_name = factory.LazyAttribute(lambda o: "%s" % o.costumer)
+    cart = factory.SubFactory(CartFactory)

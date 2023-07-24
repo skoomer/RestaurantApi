@@ -1,6 +1,5 @@
-from rest_framework import viewsets, permissions, mixins
-from .serializers import OrderListSerializer, OrderDetailSerializer
-
+from rest_framework import viewsets, permissions, mixins, status, response
+from .serializers import OrderListSerializer, OrderDetailSerializer, CartSerializer
 from .models import Order
 
 
@@ -25,3 +24,19 @@ class OrderListView(
             return OrderDetailSerializer
 
         return self.serializer_class
+
+
+class CartCreateView(viewsets.GenericViewSet, mixins.CreateModelMixin):
+    """create cart"""
+
+    serializer_class = CartSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return response.Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def perform_create(self, serializer):
+        serializer.save()
