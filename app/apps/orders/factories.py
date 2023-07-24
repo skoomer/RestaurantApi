@@ -49,3 +49,4 @@ class OrdersFactory(factory.django.DjangoModelFactory):
     address = "street : test , house : 10, city : Test"
     creation_date = factory.LazyFunction(timezone.now)
     costumer_name = factory.LazyAttribute(lambda o: "%s" % o.costumer)
+    cart = factory.SubFactory(CartFactory)

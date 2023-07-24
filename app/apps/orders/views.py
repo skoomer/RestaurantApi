@@ -11,7 +11,6 @@ class OrderListView(
     date, total price, number of dishes, status.Orders API for a logged in user"""
 
     permission_classes = [permissions.IsAuthenticated]
-    lookup_field = "pk"
     serializer_class = OrderListSerializer
 
     def get_queryset(self):
