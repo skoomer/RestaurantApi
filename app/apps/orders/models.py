@@ -13,32 +13,14 @@ class Cart(models.Model):
         User, on_delete=models.CASCADE, related_name="cart", verbose_name="customer"
     )
     restaurant = models.ForeignKey(
-        Restaurant, on_delete=models.CASCADE, related_name="cart", verbose_name="restaurant"
+        Restaurant,
+        on_delete=models.CASCADE,
+        related_name="cart",
+        verbose_name="restaurant",
     )
 
     def __str__(self):
         return f"Cart {self.id}"
-
-
-class CartItems(models.Model):
-    """model object cart items"""
-
-    cart = models.ForeignKey(
-        Cart,
-        on_delete=models.CASCADE,
-        related_name="cart_items",
-        verbose_name="Cart",
-    )
-    dish = models.ForeignKey(
-        Dishes,
-        on_delete=models.CASCADE,
-        related_name="cart_item_dishes",
-        verbose_name="dish",
-    )
-    quantity = models.PositiveIntegerField(verbose_name="quantity dishes")
-
-    def __str__(self):
-        return f"Cart items {self.id}"
 
 
 class Order(models.Model):
@@ -72,5 +54,30 @@ class Order(models.Model):
     address = models.CharField(max_length=200, verbose_name="address delivery")
     costumer_name = models.CharField(verbose_name="costumer name", max_length=100)
 
+    cart = models.ForeignKey(
+        Cart, on_delete=models.CASCADE, related_name="order", verbose_name="Cart order"
+    )
+
     def __str__(self):
         return f"Order number {self.id}"
+
+
+class CartItems(models.Model):
+    """model object cart items"""
+
+    cart = models.ForeignKey(
+        Cart,
+        on_delete=models.CASCADE,
+        related_name="cart_items",
+        verbose_name="Cart",
+    )
+    dish = models.ForeignKey(
+        Dishes,
+        on_delete=models.CASCADE,
+        related_name="cart_item_dishes",
+        verbose_name="dish",
+    )
+    quantity = models.PositiveIntegerField(verbose_name="quantity dishes")
+
+    def __str__(self):
+        return f"Cart items {self.id}"

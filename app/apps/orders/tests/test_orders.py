@@ -7,8 +7,8 @@ class OrdersTestCase(TestCase):
     """unittest orders model object"""
 
     def setUp(self):
-        self.orders = OrdersFactory()
-        self.restaurant = RestaurantFactory
+        self.restaurant = RestaurantFactory()
+        self.orders = OrdersFactory(restaurant=self.restaurant)
 
     def test_order_str(self):
         self.assertEqual(str(self.orders), str(self.orders))
