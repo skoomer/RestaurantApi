@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from apps.restaurants.serializers import RestaurantListSerializer
+from django.db.models import Sum
+from apps.restaurants.serializers import DishesSerializer
 from .models import Order, CartItems, Cart
 
 
@@ -12,7 +14,7 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = [
             "id",
-            "costumer_name",
+            "customer_name",
             "creation_date",
             "total_price",
             "address",
@@ -21,21 +23,23 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class CartItemSerializer(serializers.ModelSerializer):
-    """"Base cart item serializer"""
+    """Base cart item serializer"""
+
     quantity = serializers.IntegerField()
-    price = serializers.SerializerMethodField()
+    total_price = serializers.SerializerMethodField()
 
     class Meta:
         """set fields , models serializers"""
+
         model = CartItems
         fields = (
             "id",
             "dish",
             "quantity",
-            "price",
+            "total_price",
         )
 
-    def get_price(self, obj):
+    def get_total_price(self, obj):
         total_price = 0
         price = obj.dish.price
         total_price += price * obj.quantity
@@ -44,37 +48,37 @@ class CartItemSerializer(serializers.ModelSerializer):
 
 class CartSerializer(serializers.ModelSerializer):
     """Base cart model serializer"""
-    # пізніше запитать як обробляти помилки - якщо створити корзину  з ресторан 1 а блюдо з ресторану 2
 
-    items = CartItemSerializer(many=True)
+    cart_items = CartItemSerializer(many=True)
 
-    restaurant = RestaurantListSerializer(many=True, read_only=True)
+    restaurant = RestaurantListSerializer(read_only=True)
 
     class Meta:
         """set fields , models serializers"""
+
         model = Cart
 
-        fields = ["id", "restaurant", "items"]
+        fields = ["id", "restaurant", "cart_items"]
 
     def create(self, validated_data):
-        # issue - if create cart with restaurant 1 with dishes restaurant 2 have error , add exceptions
-        cart_items = validated_data.pop("items")
 
-        # Group the cart items by restaurant for convenience and iteration
+        cart_items = validated_data.pop("cart_items")
+
+        # Group the cart items by restaurant
+
         items_by_restaurant = {}
         user = self.context["request"].user.id
 
         for cart_item in cart_items:
+            # Get all restaurants id
 
             restaurant_id = cart_item["dish"].restaurants_id
             if restaurant_id not in items_by_restaurant:
                 items_by_restaurant[restaurant_id] = []
             items_by_restaurant[restaurant_id].append(cart_item)
 
-        # Create a cart for each restaurant and add the items
-        carts = []
-
         for restaurant_id, items in items_by_restaurant.items():
+            # Create a cart for each restaurant and add the items
 
             # Check if the user already has a cart for this restaurant
             existing_cart = Cart.objects.filter(
@@ -89,11 +93,8 @@ class CartSerializer(serializers.ModelSerializer):
             else:
                 cart = existing_cart.first()
 
-            # Use the existing cart
-
-            # Add the cart items to the cart
-
             for item in items:
+                # Add the cart items to the cart, create cart items
 
                 existing_item = CartItems.objects.filter(
                     cart=cart, dish=item["dish"], cart__restaurant__id=restaurant_id
@@ -107,15 +108,15 @@ class CartSerializer(serializers.ModelSerializer):
                     CartItems.objects.create(
                         cart=cart, dish=item["dish"], quantity=item["quantity"]
                     )
-            carts.append(cart)
 
-        return carts
+        return cart
 
 
 class OrderListSerializer(serializers.ModelSerializer):
     """List of orders with fields: customer name, date, total price, number_dishes(total number), status"""
 
     number_dishes = serializers.SerializerMethodField()
+    creation_date = serializers.DateTimeField(format="%d-%m-%Y %H:%M:%S")
 
     class Meta(OrderSerializer.Meta):
         """set fields , models serializers"""
@@ -124,12 +125,11 @@ class OrderListSerializer(serializers.ModelSerializer):
         fields = OrderSerializer.Meta.fields + ["number_dishes"]
 
     def get_number_dishes(self, obj):
-        cart = Cart.objects.filter(order=obj)
-        cart_items = CartItems.objects.filter(cart__in=cart)
-        total_quantity = 0
-        for cart_item in cart_items:
-            total_quantity += cart_item.quantity
-        return total_quantity
+        cart_items = CartItems.objects.filter(cart__order=obj)
+        total_quantity = cart_items.aggregate(total_quantity=Sum("quantity"))[
+            "total_quantity"
+        ]
+        return total_quantity or 0
 
 
 class OrderDetailSerializer(OrderSerializer):
@@ -148,11 +148,5 @@ class OrderDetailSerializer(OrderSerializer):
         cart = Cart.objects.filter(order=obj)
         cart_items = CartItems.objects.filter(cart__in=cart)
 
-        return [
-            {
-                "name": item.dish.title,
-                "price": item.dish.price,
-                "quantity": item.quantity,
-            }
-            for item in cart_items
-        ]
+        dishes = [item.dish for item in cart_items]
+        return DishesSerializer(instance=dishes, many=True).data
