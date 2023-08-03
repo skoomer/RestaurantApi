@@ -85,7 +85,7 @@ class CartSerializer(serializers.ModelSerializer):
                 customer_id=user, restaurant_id=restaurant_id, order=None
             )
 
-            if not existing_cart:
+            if not existing_cart.first():
                 # If the cart does not exist or an order already exists, create a new cart
                 cart = Cart.objects.create(
                     customer_id=user, restaurant_id=restaurant_id
