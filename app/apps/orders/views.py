@@ -1,6 +1,5 @@
 from rest_framework import viewsets, permissions, mixins
-from .serializers import OrderListSerializer, OrderDetailSerializer
-
+from .serializers import OrderListSerializer, OrderDetailSerializer, CartSerializer
 from .models import Order
 
 
@@ -14,7 +13,7 @@ class OrderListView(
     serializer_class = OrderListSerializer
 
     def get_queryset(self):
-        qs = Order.objects.filter(costumer=self.request.user)
+        qs = Order.objects.filter(customer=self.request.user)
         return qs
 
     def get_serializer_class(self):
@@ -24,3 +23,10 @@ class OrderListView(
             return OrderDetailSerializer
 
         return self.serializer_class
+
+
+class CartCreateView(viewsets.GenericViewSet, mixins.CreateModelMixin):
+    """create cart"""
+
+    serializer_class = CartSerializer
+    permission_classes = [permissions.IsAuthenticated]

@@ -33,8 +33,8 @@ class Order(models.Model):
         related_name="order",
         verbose_name="Restaurant",
     )
-    costumer = models.ForeignKey(
-        User, on_delete=models.CASCADE, verbose_name="costumer", related_name="costumer"
+    customer = models.ForeignKey(
+        User, on_delete=models.CASCADE, verbose_name="customer", related_name="customer"
     )
 
     creation_date = models.DateTimeField(
@@ -52,7 +52,7 @@ class Order(models.Model):
     )
 
     address = models.CharField(max_length=200, verbose_name="address delivery")
-    costumer_name = models.CharField(verbose_name="costumer name", max_length=100)
+    customer_name = models.CharField(verbose_name="customer name", max_length=100)
 
     cart = models.ForeignKey(
         Cart, on_delete=models.CASCADE, related_name="order", verbose_name="Cart order"

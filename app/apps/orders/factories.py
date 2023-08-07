@@ -29,7 +29,7 @@ class CartItemsFactory(factory.django.DjangoModelFactory):
 
     dish = factory.SubFactory(DishesFactory)
 
-    quantity = 0
+    quantity = 2
 
 
 class OrdersFactory(factory.django.DjangoModelFactory):
@@ -42,11 +42,13 @@ class OrdersFactory(factory.django.DjangoModelFactory):
 
     status = Order.STATUS.in_processing
     restaurant = factory.SubFactory(RestaurantFactory)
-    costumer = factory.SubFactory(UserFactory, email=factory.Sequence(lambda n: f'test_email{n}@example.com'))
+    customer = factory.SubFactory(
+        UserFactory, email=factory.Sequence(lambda n: f"test_email{n}@example.com")
+    )
 
     total_price = 100.00
 
     address = "street : test , house : 10, city : Test"
     creation_date = factory.LazyFunction(timezone.now)
-    costumer_name = factory.LazyAttribute(lambda o: "%s" % o.costumer)
+    customer_name = factory.LazyAttribute(lambda o: "%s" % o.customer)
     cart = factory.SubFactory(CartFactory)
