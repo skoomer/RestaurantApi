@@ -49,7 +49,7 @@ class CartItemSerializer(serializers.ModelSerializer):
 class CartSerializer(serializers.ModelSerializer):
     """Base cart model serializer"""
 
-    cart_items = CartItemSerializer(many=True)
+    cart_items = CartItemSerializer(many=True, partial=True)
 
     restaurant = RestaurantListSerializer(read_only=True)
 
@@ -59,6 +59,44 @@ class CartSerializer(serializers.ModelSerializer):
         model = Cart
 
         fields = ["id", "restaurant", "cart_items"]
+
+    def update(self, instance, validated_data):
+        # if items  update quantity eq 0 delete items
+        # if cart empty cart_items delete cart
+
+        # get objects cart_items
+        cart_items_data = validated_data.get("cart_items")
+
+        if cart_items_data is not None:
+            cart_items = instance.cart_items.all()
+            cart_items_dict = {item.dish.id: item for item in cart_items}
+
+        for cart_item_data in cart_items_data:
+            # get id objects in cart_items
+            cart_item_id = cart_item_data.get("dish").id
+            # if objects exists
+            if cart_item_id:
+                # get eq object from cart items
+                cart_item = cart_items_dict.get(cart_item_id)
+
+                # get current object
+                if cart_item:
+                    # get quantity or set default quantity ( safely access if key not found )
+                    cart_item.quantity = cart_item_data.get(
+                        "quantity", cart_item.quantity
+                    )
+
+                    # delete object cart_items from cart if quantity eq 0
+                    if cart_item.quantity == 0:
+                        cart_item.delete()
+                    else:
+                        cart_item.save()
+
+        # delete instance cart if cart_items empty
+        if instance.cart_items.count() == 0:
+            instance.delete()
+
+        return instance
 
     def create(self, validated_data):
 

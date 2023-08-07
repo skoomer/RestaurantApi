@@ -30,9 +30,10 @@ class TestOrdersApi(TestCase):
         self.orders = OrdersFactory(
             cart=self.cart, customer=self.user, restaurant=self.restaurant
         )
-        self.cart_items = CartItemsFactory(cart=self.cart, quantity=1)
         self.url_order_detail = reverse("orders:orders-detail", args=[self.orders.id])
+        self.url_cart_detail = reverse("orders:carts-detail", args=[self.cart.id])
         self.dish = DishesFactory()
+        self.cart_items = CartItemsFactory(cart=self.cart, quantity=1, dish=self.dish)
 
     def test_get_all_orders_user(self):
         self.client.force_login(self.user)
@@ -192,3 +193,67 @@ class TestOrdersApi(TestCase):
             add_new_item_data["cart_items"][0]["dish"],
         )
         self.assertEqual(response.status_code, 201)
+
+    def test_delete_object_from_cart_items(self):
+        dish_2 = DishesFactory()
+        # add cart items to cart
+        new_cart_items = CartItemsFactory(cart=self.cart, dish=dish_2)
+
+        self.client.force_login(self.user)
+
+        data = {"cart_items": [{"dish": new_cart_items.dish.id, "quantity": 0}]}
+
+        response = self.client.get(self.url_cart_detail, data)
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(self.cart.cart_items.all().count(), 2)
+
+        # update cart items / delete object cart_items from cart set quantity 0
+        response = self.client.put(
+            self.url_cart_detail, data, content_type="application/json"
+        )
+        self.assertEqual(self.cart.cart_items.all().count(), 1)
+
+    def test_update_quantity_dish_in_cart_items(self):
+        self.client.force_login(self.user)
+
+        data = {"cart_items": [{"dish": self.dish.id, "quantity": 2}]}
+        # get cart and check default values
+        response = self.client.get(self.url_cart_detail)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["cart_items"][0]["quantity"], 1)
+        self.assertEqual(
+            response.data["cart_items"][0]["total_price"],
+            self.dish.price,
+        )
+
+        # update cart items
+        response = self.client.put(
+            self.url_cart_detail, data, content_type="application/json"
+        )
+        # check change quantity after request
+        self.assertEqual(response.data["cart_items"][0]["quantity"], 2)
+
+        # and check total price,after change quantity
+        total_price = self.dish.price * data["cart_items"][0]["quantity"]
+        self.assertEqual(
+            response.data["cart_items"][0]["total_price"],
+            total_price,
+        )
+
+    def test_delete_cart_if_cart__items_empty(self):
+        self.client.force_login(self.user)
+
+        data = {"cart_items": [{"dish": self.cart_items.dish.id, "quantity": 0}]}
+        # check  cart,cart_items
+        response = self.client.get(self.url_cart_detail)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.cart.cart_items.all().count(), 1)
+
+        # update cart items
+        response = self.client.put(
+            self.url_cart_detail, data, content_type="application/json"
+        )
+        # check cart exists, must eq False
+        cart = Cart.objects.filter(id=self.cart.id).exists()
+        self.assertFalse(cart)
