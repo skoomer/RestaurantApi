@@ -201,7 +201,12 @@ class TestOrdersApi(TestCase):
 
         self.client.force_login(self.user)
 
-        data = {"cart_items": [{"dish": new_cart_items.dish.id, "quantity": 0}]}
+        data = {
+            "cart_items": [
+                {"dish": new_cart_items.dish.id, "quantity": 0},
+                {"dish": self.cart_items.dish.id, "quantity": 1},
+            ]
+        }
 
         response = self.client.get(self.url_cart_detail, data)
         self.assertEqual(response.status_code, 200)

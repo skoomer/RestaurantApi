@@ -71,11 +71,19 @@ class CartSerializer(serializers.ModelSerializer):
             cart_items = instance.cart_items.all()
             cart_items_dict = {item.dish.id: item for item in cart_items}
 
-        for cart_item_data in cart_items_data:
-            # get id objects in cart_items
-            cart_item_id = cart_item_data.get("dish").id
-            # if objects exists
-            if cart_item_id:
+            # Create a set of cart item ids from the updated cart items data
+            updated_cart_item_ids = {
+                item_data.get("dish").id for item_data in cart_items_data
+            }
+
+            for cart_item in cart_items:
+                if cart_item.dish.id not in updated_cart_item_ids:
+                    cart_item.delete()
+
+            for cart_item_data in cart_items_data:
+                # get id objects in cart_items
+                cart_item_id = cart_item_data.get("dish").id
+
                 # get eq object from cart items
                 cart_item = cart_items_dict.get(cart_item_id)
 

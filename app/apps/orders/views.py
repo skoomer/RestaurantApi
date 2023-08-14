@@ -34,8 +34,18 @@ class CartCreateView(
     """create cart"""
 
     serializer_class = CartSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        qs = Cart.objects.filter(customer=self.request.user)
+        if self.request.user.is_authenticated:
+            qs = Cart.objects.filter(customer=self.request.user)
+        else:
+            qs = Cart.objects.all()
         return qs
+
+    def perform_create(self, serializer):
+        anonymous = self.request.user.is_authenticated
+        if anonymous is False:
+            serializer.save(customer=None)
+        else:
+            serializer.save()

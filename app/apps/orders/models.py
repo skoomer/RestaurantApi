@@ -10,7 +10,7 @@ class Cart(models.Model):
     """model object cart"""
 
     customer = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="cart", verbose_name="customer"
+        User, on_delete=models.CASCADE, related_name="cart", verbose_name="customer", blank=True, null=True
     )
     restaurant = models.ForeignKey(
         Restaurant,
