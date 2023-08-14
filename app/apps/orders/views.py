@@ -38,9 +38,9 @@ class CartCreateView(
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
-            qs = Cart.objects.filter(customer=self.request.user)
+            qs = Cart.objects.filter(customer=self.request.user, order=None)
         else:
-            qs = Cart.objects.all()
+            qs = Cart.objects.filter(order=None)
         return qs
 
     def perform_create(self, serializer):
