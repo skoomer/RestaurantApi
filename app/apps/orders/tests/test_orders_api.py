@@ -24,6 +24,12 @@ class TestOrdersApi(TestCase):
                 "set_password", self.data_login["password"]
             ),
         )
+        self.user2 = UserFactory(
+            email="user2@gmail.com",
+            password=factory.PostGenerationMethodCall(
+                "set_password", self.data_login["password"]
+            ),
+        )
 
         self.restaurant = RestaurantFactory()
         self.cart = CartFactory(customer=self.user, restaurant=self.restaurant)
@@ -32,8 +38,27 @@ class TestOrdersApi(TestCase):
         )
         self.url_order_detail = reverse("orders:orders-detail", args=[self.orders.id])
         self.url_cart_detail = reverse("orders:carts-detail", args=[self.cart.id])
+        self.url_cart_list = reverse("orders:carts-list")
+
         self.dish = DishesFactory()
         self.cart_items = CartItemsFactory(cart=self.cart, quantity=1, dish=self.dish)
+
+    def test_get_carts_with_user_and_without_user(self):
+        cart_2 = CartFactory(customer=None, restaurant=self.restaurant)
+        url_cart_list = reverse("orders:carts-list")
+
+        # get cart if user is un authorized and without order
+        response = self.client.get(url_cart_list)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["results"][0]["id"], cart_2.id)
+        self.assertIsNone(response.data["results"][0]["customer"])
+        self.assertFalse(response.data["results"][0]["order"])
+
+        # auth user get cart with customer and cart without customer
+        self.client.force_login(self.user)
+        response = self.client.get(url_cart_list)
+        self.assertEqual(len(response.data["results"]), 2)
 
     def test_get_all_orders_user(self):
         self.client.force_login(self.user)
@@ -195,6 +220,8 @@ class TestOrdersApi(TestCase):
         self.assertEqual(response.status_code, 201)
 
     def test_delete_object_from_cart_items(self):
+        url_cart_detail = reverse("orders:carts-detail", args=[self.cart.id])
+
         dish_2 = DishesFactory()
         # add cart items to cart
         new_cart_items = CartItemsFactory(cart=self.cart, dish=dish_2)
@@ -208,7 +235,7 @@ class TestOrdersApi(TestCase):
             ]
         }
 
-        response = self.client.get(self.url_cart_detail, data)
+        response = self.client.get(url_cart_detail, data)
         self.assertEqual(response.status_code, 200)
 
         self.assertEqual(self.cart.cart_items.all().count(), 2)

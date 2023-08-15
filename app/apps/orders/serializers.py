@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from apps.restaurants.serializers import RestaurantListSerializer
 from django.db.models import Sum
+from apps.accounts.serializers import UserSerializer
 from apps.restaurants.serializers import DishesSerializer
 from .models import Order, CartItems, Cart
 
@@ -52,13 +53,15 @@ class CartSerializer(serializers.ModelSerializer):
     cart_items = CartItemSerializer(many=True, partial=True)
 
     restaurant = RestaurantListSerializer(read_only=True)
+    order = OrderSerializer(read_only=True, many=True)
+    customer = UserSerializer(read_only=True)
 
     class Meta:
         """set fields , models serializers"""
 
         model = Cart
 
-        fields = ["id", "restaurant", "cart_items"]
+        fields = ["id", "restaurant", "cart_items", "order", "customer"]
 
     def update(self, instance, validated_data):
         # if items  update quantity eq 0 delete items
