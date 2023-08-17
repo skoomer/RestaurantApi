@@ -47,8 +47,7 @@ class CartCreateView(
         return qs
 
     def perform_create(self, serializer):
-        anonymous = self.request.user.is_authenticated
-        if anonymous is False:
+        if self.request.user.is_authenticated is False:
             serializer.save(customer=None)
         else:
-            serializer.save()
+            serializer.save(customer=self.request.user)
