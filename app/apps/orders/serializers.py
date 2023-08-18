@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from apps.restaurants.serializers import RestaurantListSerializer
 from django.db.models import Sum
+from apps.accounts.serializers import UserSerializer
 from apps.restaurants.serializers import DishesSerializer
 from .models import Order, CartItems, Cart
 
@@ -49,16 +50,64 @@ class CartItemSerializer(serializers.ModelSerializer):
 class CartSerializer(serializers.ModelSerializer):
     """Base cart model serializer"""
 
-    cart_items = CartItemSerializer(many=True)
+    cart_items = CartItemSerializer(many=True, partial=True)
 
     restaurant = RestaurantListSerializer(read_only=True)
+    order = OrderSerializer(read_only=True, many=True)
+    customer = UserSerializer(read_only=True)
 
     class Meta:
         """set fields , models serializers"""
 
         model = Cart
 
-        fields = ["id", "restaurant", "cart_items"]
+        fields = ["id", "restaurant", "cart_items", "order", "customer"]
+
+    def update(self, instance, validated_data):
+        # if items  update quantity eq 0 delete items
+        # if cart empty cart_items delete cart
+
+        # get objects cart_items
+        cart_items_data = validated_data.get("cart_items")
+
+        if cart_items_data is not None:
+            cart_items = instance.cart_items.all()
+            cart_items_dict = {item.dish.id: item for item in cart_items}
+
+            # Create a set of cart item ids from the updated cart items data
+            updated_cart_item_ids = {
+                item_data.get("dish").id for item_data in cart_items_data
+            }
+
+            for cart_item in cart_items:
+                if cart_item.dish.id not in updated_cart_item_ids:
+                    cart_item.delete()
+
+            for cart_item_data in cart_items_data:
+                # get id objects in cart_items
+                cart_item_id = cart_item_data.get("dish").id
+
+                # get eq object from cart items
+                cart_item = cart_items_dict.get(cart_item_id)
+
+                # get current object
+                if cart_item:
+                    # get quantity or set default quantity ( safely access if key not found )
+                    cart_item.quantity = cart_item_data.get(
+                        "quantity", cart_item.quantity
+                    )
+
+                    # delete object cart_items from cart if quantity eq 0
+                    if cart_item.quantity == 0:
+                        cart_item.delete()
+                    else:
+                        cart_item.save()
+
+        # delete instance cart if cart_items empty
+        if instance.cart_items.count() == 0:
+            instance.delete()
+
+        return instance
 
     def create(self, validated_data):
 

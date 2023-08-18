@@ -1,6 +1,7 @@
+from django.db.models import Q
 from rest_framework import viewsets, permissions, mixins
 from .serializers import OrderListSerializer, OrderDetailSerializer, CartSerializer
-from .models import Order
+from .models import Order, Cart
 
 
 class OrderListView(
@@ -25,8 +26,28 @@ class OrderListView(
         return self.serializer_class
 
 
-class CartCreateView(viewsets.GenericViewSet, mixins.CreateModelMixin):
+class CartCreateView(
+    viewsets.GenericViewSet,
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+):
     """create cart"""
 
     serializer_class = CartSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        if self.request.user.is_authenticated:
+            qs = Cart.objects.filter(Q(customer=self.request.user) | Q(customer=None))
+
+        else:
+            qs = Cart.objects.filter(customer=None, order=None)
+        return qs
+
+    def perform_create(self, serializer):
+        if self.request.user.is_authenticated is False:
+            serializer.save(customer=None)
+        else:
+            serializer.save(customer=self.request.user)
