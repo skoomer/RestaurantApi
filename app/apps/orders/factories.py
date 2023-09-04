@@ -1,3 +1,4 @@
+import uuid
 import factory
 from django.utils import timezone
 from apps.accounts.factories import UserFactory
@@ -15,6 +16,7 @@ class CartFactory(factory.django.DjangoModelFactory):
 
     customer = factory.SubFactory(UserFactory)
     restaurant = factory.SubFactory(RestaurantFactory)
+    cart_uuid = factory.LazyFunction(uuid.uuid4)
 
 
 class CartItemsFactory(factory.django.DjangoModelFactory):

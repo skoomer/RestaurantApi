@@ -1,3 +1,4 @@
+import uuid
 import pytest
 import factory
 from django.test import TestCase
@@ -42,6 +43,7 @@ class TestOrdersApi(TestCase):
 
         self.dish = DishesFactory()
         self.cart_items = CartItemsFactory(cart=self.cart, quantity=1, dish=self.dish)
+        self.payment_url = reverse("orders:payment-list")
 
     def test_get_carts_with_user_and_without_user(self):
         cart_2 = CartFactory(customer=None, restaurant=self.restaurant)
@@ -289,3 +291,31 @@ class TestOrdersApi(TestCase):
         # check cart exists, must eq False
         cart = Cart.objects.filter(id=self.cart.id).exists()
         self.assertFalse(cart)
+
+    @pytest.mark.vcr()
+    def test_payment_intent_authenticated_user(self):
+        self.client.force_login(self.user)
+        cart = CartFactory(customer=self.user, restaurant=self.restaurant)
+
+        data = {
+            "address": "test address",
+            "customer_name": "test name",
+            "cart_uuid": cart.cart_uuid,
+        }
+
+        response = self.client.post(self.payment_url, data=data)
+        self.assertEqual(response.status_code, 201)
+
+    def test_payment_intent_unauthenticated_user(self):
+
+        response = self.client.post(self.payment_url)
+
+        self.assertEqual(response.status_code, 302)
+
+    def test_payment_intent_cart_not_found(self):
+        self.client.force_login(self.user)
+        token = uuid.uuid4()
+        response = self.client.post(self.payment_url, data={"cart_uuid": token})
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data["error"], "Cart not found")

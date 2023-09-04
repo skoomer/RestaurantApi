@@ -61,7 +61,7 @@ class CartSerializer(serializers.ModelSerializer):
 
         model = Cart
 
-        fields = ["id", "restaurant", "cart_items", "order", "customer"]
+        fields = ["id", "restaurant", "cart_items", "order", "customer", "cart_uuid"]
 
     def update(self, instance, validated_data):
         # if items  update quantity eq 0 delete items
@@ -158,7 +158,7 @@ class CartSerializer(serializers.ModelSerializer):
                         cart=cart, dish=item["dish"], quantity=item["quantity"]
                     )
 
-        return cart
+            return cart
 
 
 class OrderListSerializer(serializers.ModelSerializer):
@@ -199,3 +199,40 @@ class OrderDetailSerializer(OrderSerializer):
 
         dishes = [item.dish for item in cart_items]
         return DishesSerializer(instance=dishes, many=True).data
+
+
+class OrderCreateSerializer(serializers.ModelSerializer):
+    """Create an order with fields: list of dishes, address, customer name"""
+
+    list_of_dishes = CartItemSerializer(
+        many=True, source="cart.cart_items.all", read_only=True
+    )
+
+    class Meta:
+        """set fields , models serializers"""
+        model = Order
+        fields = ("id", "address", "customer_name", "list_of_dishes")
+
+    def create(self, validated_data):
+
+        user = self.context["request"].user.id
+
+        token = self.context["request"].data["cart_uuid"]
+
+        cart = Cart.objects.filter(
+            customer_id=user, order=None, cart_uuid=str(token)
+        ).first()
+
+        total_price = 0
+        for item in cart.cart_items.all():
+            total_price += item.dish.price * item.quantity
+
+        order = Order.objects.create(
+            cart_id=cart.id,
+            total_price=total_price,
+            customer_id=user,
+            restaurant_id=cart.restaurant.id,
+            status=Order.STATUS.in_processing,
+            **validated_data,
+        )
+        return order
