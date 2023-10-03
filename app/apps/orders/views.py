@@ -1,9 +1,9 @@
-import uuid
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 import stripe
+from stripe.error import StripeError
 from django.conf import settings
-from django.urls import reverse
-from django.shortcuts import redirect
+from rest_framework.decorators import action
 from rest_framework import viewsets, permissions, mixins, response, status
 from .serializers import (
     OrderListSerializer,
@@ -12,8 +12,6 @@ from .serializers import (
     OrderCreateSerializer,
 )
 from .models import Order, Cart
-
-stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
 class OrderListView(
@@ -55,86 +53,77 @@ class CartCreateView(
             qs = Cart.objects.filter(Q(customer=self.request.user) | Q(customer=None))
 
         else:
-            qs = Cart.objects.filter(customer=None, order=None)
+            cookie_str = self.request.headers.get("Cookie", "")
+            cookie_parts = cookie_str.split("; ")
+
+            # Initialize a variable to store the cart_uuid
+            cart_uuid = None
+
+            # Loop through the cookie parts to find 'cart_uuid'
+            for part in cookie_parts:
+                if part.startswith("cart_uuid="):
+                    cart_uuid = part[len("cart_uuid="):]
+
+            qs = Cart.objects.filter(customer=None, order=None, cart_uuid=cart_uuid)
         return qs
 
     def perform_create(self, serializer):
         if self.request.user.is_authenticated is False:
-            cart_uuid = uuid.uuid4()
-            cart = serializer.save(customer=None)
-            cart.cart_uuid = cart_uuid
-            cart.save()
-            return response.Response(
-                {"cart_uuid": cart_uuid}, status=status.HTTP_201_CREATED
-            )
-
+            serializer.save(customer=None)
         serializer.save(customer=self.request.user)
-        return response.Response(
-            {"cart_uuid": serializer.instance.cart_uuid},
-            status=status.HTTP_201_CREATED,
-        )
 
 
-class PaymentIntentView(
+class OrderCreateView(
     viewsets.GenericViewSet,
     mixins.CreateModelMixin,
-    mixins.ListModelMixin,
 ):
-    """Payments. Complete an order with a payment."""
+    """Order. Create an order."""
 
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
     serializer_class = OrderCreateSerializer
 
-    def get_queryset(self):
-        token = self.request.data.get("cart_uuid")
-        qs = Order.objects.filter(cart__cart_uuid=token)
-        return qs
-
     def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return response.Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        token = request.data.get("cart_uuid")
+        return response.Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        if not request.user.is_authenticated:
-            next_url = reverse("orders:payment-list")
-            login_url = reverse("account_login") + "?next=" + next_url
-            return redirect(login_url)
+
+class PaymentIntentView(viewsets.ViewSet):
+    """Stripe api. Payment create view. Add payment id to order"""
+    permission_classes = [permissions.IsAuthenticated]
+
+    @action(detail=True, methods=["post"])
+    def create_payment_intent(self, request, pk=None):
+        order = get_object_or_404(Order, id=pk, customer=request.user)
 
         try:
+            stripe.api_key = settings.STRIPE_SECRET_KEY
 
-            cart = Cart.objects.get(cart_uuid=token)
-            cart.customer = self.request.user
-            cart.save()
-        except Cart.DoesNotExist:
+            # Create a Payment Intent for the order
+            intent = stripe.PaymentIntent.create(
+                amount=int(order.total_price),
+                currency="usd",
+                payment_method_types=["card"],
+                metadata={"order_id": order.id},
+            )
+            # save intent id in order
+            order.intent_id = intent.id
+            order.save()
+            payment_intent = stripe.PaymentIntent.retrieve(order.intent_id)
+            payment_status = payment_intent.status
             return response.Response(
-                {"error": "Cart not found"}, status=status.HTTP_404_NOT_FOUND
+                {
+                    "client_secret": intent.client_secret,
+                    "payment_status": payment_status,
+                    "order_intent": intent.id,
+                }
             )
 
-        if cart.customer != self.request.user:
+        except StripeError as e:
+            # Handle Stripe errors
             return response.Response(
-                {"error": "Unauthorized access to the cart"},
-                status=status.HTTP_401_UNAUTHORIZED,
+                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
             )
-
-        serializer = self.get_serializer(data=request.data)
-
-        serializer.is_valid(raise_exception=True)
-
-        # Create a Stripe payment intent
-        intent = stripe.PaymentIntent.create(
-            currency="usd",
-            payment_method_types=["card"],
-            metadata={
-                "customer_name": request.data.get("customer_name"),
-                "address": request.data.get("address"),
-                "list_of_dishes": cart.cart_items.all(),
-            },
-        )
-        serializer.save()
-
-        return response.Response(
-            {
-                "total": serializer.instance.total_price,
-                "client_secret": intent.client_secret,
-            },
-            status=status.HTTP_201_CREATED,
-        )

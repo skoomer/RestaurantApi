@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from django.core.exceptions import ObjectDoesNotExist
+
 from apps.restaurants.serializers import RestaurantListSerializer
 from django.db.models import Sum
 from apps.accounts.serializers import UserSerializer
@@ -207,29 +209,28 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     list_of_dishes = CartItemSerializer(
         many=True, source="cart.cart_items.all", read_only=True
     )
+    cart_uuid = serializers.UUIDField(write_only=True)
 
     class Meta:
         """set fields , models serializers"""
         model = Order
-        fields = ("id", "address", "customer_name", "list_of_dishes")
+        fields = ("id", "address", "customer_name", "list_of_dishes", "cart_uuid")
 
     def create(self, validated_data):
 
         user = self.context["request"].user.id
+        # get cart uuid
+        cart_uuid = validated_data.pop("cart_uuid")
 
-        token = self.context["request"].data["cart_uuid"]
+        try:
+            cart = Cart.objects.get(cart_uuid=cart_uuid, order=None)
+        except ObjectDoesNotExist as exc:
+            raise serializers.ValidationError({"cart_uuid": "Cart not found"}) from exc
 
-        cart = Cart.objects.filter(
-            customer_id=user, order=None, cart_uuid=str(token)
-        ).first()
-
-        total_price = 0
-        for item in cart.cart_items.all():
-            total_price += item.dish.price * item.quantity
-
+        cart.customer_id = user
+        cart.save()
         order = Order.objects.create(
             cart_id=cart.id,
-            total_price=total_price,
             customer_id=user,
             restaurant_id=cart.restaurant.id,
             status=Order.STATUS.in_processing,

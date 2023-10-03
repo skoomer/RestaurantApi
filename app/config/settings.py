@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.gis',
     'rest_framework',
+    'corsheaders',
     'rest_framework.authtoken',
     'apps.accounts',
     'apps.restaurants.apps.RestaurantsConfig',
@@ -72,6 +73,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -152,6 +154,11 @@ REST_FRAMEWORK = {
 
     ]
 }
+
+CORS_ORIGIN_WHITELIST = [
+    "http://localhost:3000",
+]
+
 REST_USE_JWT = True
 
 JWT_AUTH_COOKIE = 'my-app-auth'
@@ -251,6 +258,6 @@ EMAIL_PORT = env.str("EMAIL_PORT")
 EMAIL_HOST_USER = env.str("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD")
 
-#Payment service
+# Payment service
 STRIPE_PUBLISHABLE_KEY = env.str("STRIPE_PUBLISHABLE_KEY")
 STRIPE_SECRET_KEY = env.str("STRIPE_SECRET_KEY")

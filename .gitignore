@@ -2,6 +2,7 @@ note.txt
 .env
 .env.dev
 .edea/
+.idea/
 myvenv
 .pytest_cache
 data

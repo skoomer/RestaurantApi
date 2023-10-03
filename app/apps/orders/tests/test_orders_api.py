@@ -1,12 +1,15 @@
 import uuid
+import stripe
 import pytest
 import factory
 from django.test import TestCase
+from rest_framework.exceptions import ValidationError
 from django.urls import reverse
 from apps.accounts.factories import UserFactory
 from apps.restaurants.factories import DishesFactory, RestaurantFactory
 from apps.orders.factories import OrdersFactory, CartFactory, CartItemsFactory
 from apps.orders.models import Cart
+from django.conf import settings
 
 
 @pytest.mark.django_db
@@ -43,14 +46,16 @@ class TestOrdersApi(TestCase):
 
         self.dish = DishesFactory()
         self.cart_items = CartItemsFactory(cart=self.cart, quantity=1, dish=self.dish)
-        self.payment_url = reverse("orders:payment-list")
+        self.order_create_url = reverse("orders:order-create-list")
 
     def test_get_carts_with_user_and_without_user(self):
-        cart_2 = CartFactory(customer=None, restaurant=self.restaurant)
+        cart_2 = CartFactory.create(customer=None, restaurant=self.restaurant)
         url_cart_list = reverse("orders:carts-list")
 
         # get cart if user is un authorized and without order
-        response = self.client.get(url_cart_list)
+        response = self.client.get(
+            url_cart_list, HTTP_COOKIE=f"cart_uuid={cart_2.cart_uuid}"
+        )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data["results"]), 1)
         self.assertEqual(response.data["results"][0]["id"], cart_2.id)
@@ -292,8 +297,7 @@ class TestOrdersApi(TestCase):
         cart = Cart.objects.filter(id=self.cart.id).exists()
         self.assertFalse(cart)
 
-    @pytest.mark.vcr()
-    def test_payment_intent_authenticated_user(self):
+    def test_order_create(self):
         self.client.force_login(self.user)
         cart = CartFactory(customer=self.user, restaurant=self.restaurant)
 
@@ -302,20 +306,46 @@ class TestOrdersApi(TestCase):
             "customer_name": "test name",
             "cart_uuid": cart.cart_uuid,
         }
-
-        response = self.client.post(self.payment_url, data=data)
+        response = self.client.post(self.order_create_url, data=data)
         self.assertEqual(response.status_code, 201)
 
-    def test_payment_intent_unauthenticated_user(self):
+    @pytest.mark.vcr()
+    def test_payment_intent_authenticated_user(self):
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+        user = UserFactory(email="new_user@gmail.com")
+        cart = CartFactory(customer=user, restaurant=self.restaurant)
+        CartItemsFactory(cart=cart)
+        order = OrdersFactory(customer=user, cart=cart)
 
-        response = self.client.post(self.payment_url)
+        payment_url = reverse("orders:payment-create-payment-intent", args=[order.id])
+        self.client.force_login(user)
+        response = self.client.post(payment_url)
+        self.assertEqual(response.status_code, 200)
 
-        self.assertEqual(response.status_code, 302)
+        order.refresh_from_db()
+        # # Check if the order's intent_id is set and saved
+        self.assertEqual(order.intent_id, response.json()["order_intent"])
 
-    def test_payment_intent_cart_not_found(self):
-        self.client.force_login(self.user)
-        token = uuid.uuid4()
-        response = self.client.post(self.payment_url, data={"cart_uuid": token})
+    def test_create_payment_intent_with_unauthenticated_user(self):
+        order = OrdersFactory(customer=self.user, cart=self.cart)
+        payment_url = reverse("orders:payment-create-payment-intent", args=[order.id])
+        response = self.client.post(payment_url)
+        self.assertEqual(response.status_code, 403)
 
-        self.assertEqual(response.status_code, 404)
-        self.assertEqual(response.data["error"], "Cart not found")
+    def test_create_order_with_invalid_cart_uuid(self):
+        user = UserFactory()
+
+        cart_invalid_uuid = uuid.uuid4()
+        invalid_data = {
+            "address": "test address",
+            "customer_name": "test name",
+            "cart_uuid": cart_invalid_uuid,
+        }
+
+        self.client.force_login(user)
+
+        try:
+            response = self.client.post(self.order_create_url, invalid_data)
+            self.assertEqual(response.status_code, 400)
+        except ValidationError as e:
+            self.assertIn("Cart not found", str(e.detail))
