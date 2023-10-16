@@ -209,23 +209,43 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     list_of_dishes = CartItemSerializer(
         many=True, source="cart.cart_items.all", read_only=True
     )
-    cart_uuid = serializers.UUIDField(write_only=True)
+    cart_uuid = serializers.UUIDField(write_only=True, source="cart.cart_uuid")
+
+    cart = serializers.PrimaryKeyRelatedField(
+        queryset=Cart.objects.filter(order=None),
+        write_only=True,
+    )
 
     class Meta:
-        """set fields , models serializers"""
+        """this order serializer is used to create the order
+        This class collects all the information for placing the order, the address, the user,
+        the list of dishes and creates the order
+        used on the page "order-create"""
+
         model = Order
-        fields = ("id", "address", "customer_name", "list_of_dishes", "cart_uuid")
+        fields = (
+            "id",
+            "address",
+            "customer_name",
+            "list_of_dishes",
+            "cart_uuid",
+            "cart",
+        )
+
+    def validate_cart_uuid(self, cart_uuid):
+        try:
+            cart = Cart.objects.get(
+                cart_uuid=cart_uuid, customer=self.context["request"].user, order=None
+            )
+        except ObjectDoesNotExist as exc:
+            raise serializers.ValidationError(
+                "Cart not found or already associated with an order"
+            ) from exc
+        return cart
 
     def create(self, validated_data):
-
         user = self.context["request"].user.id
-        # get cart uuid
-        cart_uuid = validated_data.pop("cart_uuid")
-
-        try:
-            cart = Cart.objects.get(cart_uuid=cart_uuid, order=None)
-        except ObjectDoesNotExist as exc:
-            raise serializers.ValidationError({"cart_uuid": "Cart not found"}) from exc
+        cart = validated_data["cart"]
 
         cart.customer_id = user
         cart.save()

@@ -8,7 +8,7 @@ from django.urls import reverse
 from apps.accounts.factories import UserFactory
 from apps.restaurants.factories import DishesFactory, RestaurantFactory
 from apps.orders.factories import OrdersFactory, CartFactory, CartItemsFactory
-from apps.orders.models import Cart
+from apps.orders.models import Cart, Order
 from django.conf import settings
 
 
@@ -305,9 +305,13 @@ class TestOrdersApi(TestCase):
             "address": "test address",
             "customer_name": "test name",
             "cart_uuid": cart.cart_uuid,
+            "cart": cart.id
         }
         response = self.client.post(self.order_create_url, data=data)
         self.assertEqual(response.status_code, 201)
+        # Check if order create successful
+        order = Order.objects.filter(id=response.data["id"]).exists()
+        self.assertTrue(order)
 
     @pytest.mark.vcr()
     def test_payment_intent_authenticated_user(self):
