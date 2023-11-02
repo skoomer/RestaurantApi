@@ -51,11 +51,11 @@ class TestOrdersApi(TestCase):
     def test_get_carts_with_user_and_without_user(self):
         cart_2 = CartFactory.create(customer=None, restaurant=self.restaurant)
         url_cart_list = reverse("orders:carts-list")
+        data = {"cart_uuid": cart_2.cart_uuid}
 
         # get cart if user is un authorized and without order
         response = self.client.get(
-            url_cart_list, HTTP_COOKIE=f"cart_uuid={cart_2.cart_uuid}"
-        )
+            url_cart_list, data=data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data["results"]), 1)
         self.assertEqual(response.data["results"][0]["id"], cart_2.id)
