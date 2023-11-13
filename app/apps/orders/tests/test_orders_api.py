@@ -1,4 +1,8 @@
 import uuid
+import time
+import hmac
+import hashlib
+import json
 import stripe
 import pytest
 import factory
@@ -353,3 +357,61 @@ class TestOrdersApi(TestCase):
             self.assertEqual(response.status_code, 400)
         except ValidationError as e:
             self.assertIn("Cart not found", str(e.detail))
+
+    def test_stripe_webhook(self):
+        pass
+
+    @pytest.mark.vcr()
+    def test_checkout_payment_intent(self):
+        self.client.force_login(self.user)
+        url = reverse('orders:payment-checkout-payment-intent', args=[self.orders.intent_id])
+        data = {
+            "payment_intent": self.orders.intent_id
+        }
+        response = self.client.post(url, data, content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('checkout_session_id', response.data)
+
+    def test_checkout_session_completed(self):
+        webhook_secret = "whsec_29baec61718b171f3e0059aeb6d9fbbd06cd8554f83d406b3b8ccab4ad213021"
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+        user = UserFactory(email="new_user@gmail.com")
+        cart = CartFactory(customer=user, restaurant=self.restaurant)
+        CartItemsFactory(cart=cart)
+        order = OrdersFactory(customer=user, cart=cart)
+
+        payment_url = reverse("orders:payment-create-payment-intent", args=[order.id])
+        self.client.force_login(user)
+        self.client.post(payment_url)
+
+        #################################
+        payload = {
+            # "type": "payment_intent.created",
+            "type": "payment_intent.succeeded",
+            "payment_intent": order.intent_id,
+            "amount": 20
+        }
+        payload_json = json.dumps(payload)
+        url = reverse("orders:stripe_webhook")
+
+        # Generate a valid timestamp
+        timestamp = int(time.time())
+
+        # Create the expected signature
+        expected_signature = hmac.new(
+            webhook_secret.encode('utf-8'),
+            msg=(f't={timestamp},v1={payload_json}').encode('utf-8'),
+            digestmod=hashlib.sha256
+        ).hexdigest()
+
+        sig_header = f't={timestamp},v1={expected_signature}'
+        response = self.client.post(
+            url,
+            data=payload_json,
+            # format="json",
+            content_type="application/json",
+            HTTP_STRIPE_SIGNATURE=sig_header,
+        )
+
+        # Assert the response status code is 200
+        self.assertEqual(response.status_code, 200)

@@ -139,7 +139,7 @@ class PaymentIntentView(viewsets.ViewSet):
             intent = stripe.PaymentIntent.create(
                 amount=int(order.total_price),
                 currency="usd",
-                payment_method_types=["card"],
+                payment_method="pm_card_visa",
                 metadata={"order_id": order.id},
             )
             # save intent id in order
@@ -147,6 +147,7 @@ class PaymentIntentView(viewsets.ViewSet):
             order.save()
             payment_intent = stripe.PaymentIntent.retrieve(order.intent_id)
             payment_status = payment_intent.status
+            payment_intent.confirm()
             return response.Response(
                 {
                     "client_secret": intent.client_secret,
@@ -154,7 +155,6 @@ class PaymentIntentView(viewsets.ViewSet):
                     "order_intent": intent.id,
                 }
             )
-
         except StripeError as e:
             # Handle Stripe errors
             return response.Response(
@@ -168,18 +168,18 @@ class StripeWebhookView(views.APIView):
 
     permission_classes = [permissions.AllowAny]
 
-    @csrf_exempt
     def post(self, request):
         stripe.api_key = settings.STRIPE_SECRET_KEY
         payment_intent = self.request.data.get("payment_intent")
         endpoint_secret = settings.STRIPE_ENDPOINT_SECRET
-        payload = request.body
+        payload = request.data
 
         sig_header = request.META["HTTP_STRIPE_SIGNATURE"]
         event = None
 
         try:
             event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+            # import pdb; pdb.set_trace();
         except ValueError as e:
             # Invalid payload
             print("Error parsing payload: {}".format(str(e)))
@@ -192,15 +192,10 @@ class StripeWebhookView(views.APIView):
         # Handle the event
         if event["type"] == "checkout.session.completed":
             print("Sessions was completed!")
-        elif event.type == "payment_intent.succeeded":
+        elif event["type"] == "payment_intent.succeeded":
             print("PaymentIntent was successful!")
             order = Order.objects.get(intent_id=payment_intent)
             order.status = Order.STATUS.completed
             order.save()
-
-        elif event["type"] == "requires_payment_method":
-            print("PaymentIntent requires_payment_method!")
-        else:
-            print("Unhandled event type {}".format(event.type))
 
         return response.Response(status=status.HTTP_200_OK)
