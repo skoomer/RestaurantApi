@@ -32,6 +32,8 @@ urlpatterns = [
     path('dj-rest-auth/facebook/', FacebookLogin.as_view(), name='fb_login'),
 
     path('api/', include('apps.restaurants.urls', namespace='restaurants')),
+    path('api/', include('apps.orders.urls', namespace='orders')),
+
 ]
 urlpatterns += router.urls
 

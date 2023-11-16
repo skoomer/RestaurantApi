@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'apps.accounts',
     'apps.restaurants.apps.RestaurantsConfig',
+    'apps.orders.apps.OrdersConfig',
     'rest_framework_simplejwt',
     'django.contrib.sites',
     'storages',
