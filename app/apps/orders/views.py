@@ -111,8 +111,8 @@ class PaymentIntentView(viewsets.ViewSet):
                 customer_email=self.request.user.email,
                 line_items=line_items,
                 mode="payment",
-                success_url="https://example.com/success?session_id={CHECKOUT_SESSION_ID}",
-                cancel_url="http://127.0.0.1:8000/" + "cancel",
+                success_url="https://0.0.0.0:8000/success?session_id={CHECKOUT_SESSION_ID}",
+                cancel_url="http://0.0.0.0:8000/" + "cancel",
                 payment_intent_data={
                     "description": f"Payment for {payment_intent}",
                     "setup_future_usage": "on_session",

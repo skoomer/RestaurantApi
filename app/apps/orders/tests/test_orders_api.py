@@ -14,6 +14,8 @@ from apps.restaurants.factories import DishesFactory, RestaurantFactory
 from apps.orders.factories import OrdersFactory, CartFactory, CartItemsFactory
 from apps.orders.models import Cart, Order
 from django.conf import settings
+# from stripe.webhook import generate_test_header_string
+# from stripe.webhook import generate_test_header_string
 
 
 @pytest.mark.django_db
@@ -373,7 +375,7 @@ class TestOrdersApi(TestCase):
         self.assertIn('checkout_session_id', response.data)
 
     def test_checkout_session_completed(self):
-        webhook_secret = "whsec_29baec61718b171f3e0059aeb6d9fbbd06cd8554f83d406b3b8ccab4ad213021"
+        webhook_secret = settings.WEBHOOK_SECRET
         stripe.api_key = settings.STRIPE_SECRET_KEY
         user = UserFactory(email="new_user@gmail.com")
         cart = CartFactory(customer=user, restaurant=self.restaurant)
@@ -382,35 +384,35 @@ class TestOrdersApi(TestCase):
 
         payment_url = reverse("orders:payment-create-payment-intent", args=[order.id])
         self.client.force_login(user)
-        self.client.post(payment_url)
-
+        req = self.client.post(payment_url)
+        order.refresh_from_db()
+        order_intent = req.data['order_intent']
         #################################
         payload = {
             # "type": "payment_intent.created",
             "type": "payment_intent.succeeded",
-            "payment_intent": order.intent_id,
+            "payment_intent": order_intent,
             "amount": 20
         }
         payload_json = json.dumps(payload)
         url = reverse("orders:stripe_webhook")
 
         # Generate a valid timestamp
-        timestamp = int(time.time())
+        timestamp = str(int(time.time()))
 
-        # Create the expected signature
         expected_signature = hmac.new(
             webhook_secret.encode('utf-8'),
-            msg=(f't={timestamp},v1={payload_json}').encode('utf-8'),
+            msg=(f'{timestamp},{payload_json}').encode('utf-8'),
             digestmod=hashlib.sha256
         ).hexdigest()
 
-        sig_header = f't={timestamp},v1={expected_signature}'
+        signature = f't={timestamp},v1={expected_signature}'
         response = self.client.post(
             url,
             data=payload_json,
             # format="json",
             content_type="application/json",
-            HTTP_STRIPE_SIGNATURE=sig_header,
+            HTTP_STRIPE_SIGNATURE=signature,
         )
 
         # Assert the response status code is 200
