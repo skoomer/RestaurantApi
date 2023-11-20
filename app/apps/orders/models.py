@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from model_utils import Choices
 from django.utils.translation import gettext_lazy as _
@@ -18,6 +19,7 @@ class Cart(models.Model):
         related_name="cart",
         verbose_name="restaurant",
     )
+    cart_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
     def __str__(self):
         return f"Cart {self.id}"
@@ -57,6 +59,15 @@ class Order(models.Model):
     cart = models.ForeignKey(
         Cart, on_delete=models.CASCADE, related_name="order", verbose_name="Cart order"
     )
+
+    intent_id = models.CharField(max_length=255, unique=True, blank=True, null=True, verbose_name="intent id")
+
+    def save(self, *args, **kwargs):
+        total_price = 0
+        for item in self.cart.cart_items.all():
+            total_price += item.dish.price * item.quantity
+        self.total_price = total_price
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Order number {self.id}"

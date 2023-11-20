@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from django.core.exceptions import ObjectDoesNotExist
+
 from apps.restaurants.serializers import RestaurantListSerializer
 from django.db.models import Sum
 from apps.accounts.serializers import UserSerializer
@@ -61,7 +63,7 @@ class CartSerializer(serializers.ModelSerializer):
 
         model = Cart
 
-        fields = ["id", "restaurant", "cart_items", "order", "customer"]
+        fields = ["id", "restaurant", "cart_items", "order", "customer", "cart_uuid"]
 
     def update(self, instance, validated_data):
         # if items  update quantity eq 0 delete items
@@ -158,7 +160,7 @@ class CartSerializer(serializers.ModelSerializer):
                         cart=cart, dish=item["dish"], quantity=item["quantity"]
                     )
 
-        return cart
+            return cart
 
 
 class OrderListSerializer(serializers.ModelSerializer):
@@ -199,3 +201,59 @@ class OrderDetailSerializer(OrderSerializer):
 
         dishes = [item.dish for item in cart_items]
         return DishesSerializer(instance=dishes, many=True).data
+
+
+class OrderCreateSerializer(serializers.ModelSerializer):
+    """Create an order with fields: list of dishes, address, customer name"""
+
+    list_of_dishes = CartItemSerializer(
+        many=True, source="cart.cart_items.all", read_only=True
+    )
+    cart_uuid = serializers.UUIDField(write_only=True, source="cart.cart_uuid")
+
+    cart = serializers.PrimaryKeyRelatedField(
+        queryset=Cart.objects.filter(order=None),
+        write_only=True,
+    )
+
+    class Meta:
+        """this order serializer is used to create the order
+        This class collects all the information for placing the order, the address, the user,
+        the list of dishes and creates the order
+        used on the page "order-create"""
+
+        model = Order
+        fields = (
+            "id",
+            "address",
+            "customer_name",
+            "list_of_dishes",
+            "cart_uuid",
+            "cart",
+        )
+
+    def validate_cart_uuid(self, cart_uuid):
+        try:
+            cart = Cart.objects.get(
+                cart_uuid=cart_uuid, customer=self.context["request"].user, order=None
+            )
+        except ObjectDoesNotExist as exc:
+            raise serializers.ValidationError(
+                "Cart not found or already associated with an order"
+            ) from exc
+        return cart
+
+    def create(self, validated_data):
+        user = self.context["request"].user.id
+        cart = validated_data["cart"]
+
+        cart.customer_id = user
+        cart.save()
+        order = Order.objects.create(
+            cart_id=cart.id,
+            customer_id=user,
+            restaurant_id=cart.restaurant.id,
+            status=Order.STATUS.in_processing,
+            **validated_data,
+        )
+        return order

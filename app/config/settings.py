@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.gis',
     'rest_framework',
+    'corsheaders',
     'rest_framework.authtoken',
     'apps.accounts',
     'apps.restaurants.apps.RestaurantsConfig',
@@ -60,6 +61,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'django.contrib.sites',
     'storages',
+    'stripe',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -71,6 +73,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -151,6 +154,11 @@ REST_FRAMEWORK = {
 
     ]
 }
+
+CORS_ORIGIN_WHITELIST = [
+    "http://localhost:3000",
+]
+
 REST_USE_JWT = True
 
 JWT_AUTH_COOKIE = 'my-app-auth'
@@ -235,9 +243,9 @@ EMAIL_CONFIRMATION_SIGNUP = True
 ACCOUNT_AUTHENTICATION_METHOD = "email"
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
-EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = '/'
-EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = '/'
-LOGIN_REDIRECT_URL = "/"
+# EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = '/'
+# EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = '/'
+# LOGIN_REDIRECT_URL = "/"
 LOGIN_URL = 'https://localhost:8000/dj-rest-auth/login'
 
 
@@ -249,3 +257,10 @@ EMAIL_HOST = env.str("EMAIL_HOST")
 EMAIL_PORT = env.str("EMAIL_PORT")
 EMAIL_HOST_USER = env.str("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD")
+
+# Payment service
+STRIPE_PUBLISHABLE_KEY = env.str("STRIPE_PUBLISHABLE_KEY")
+STRIPE_SECRET_KEY = env.str("STRIPE_SECRET_KEY")
+STRIPE_ENDPOINT_SECRET = env.str("STRIPE_ENDPOINT_SECRET")
+
+WEBHOOK_SECRET = env.str("STRIPE_ENDPOINT_SECRET")

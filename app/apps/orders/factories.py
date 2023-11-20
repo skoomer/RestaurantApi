@@ -1,3 +1,4 @@
+import uuid
 import factory
 from django.utils import timezone
 from apps.accounts.factories import UserFactory
@@ -15,6 +16,7 @@ class CartFactory(factory.django.DjangoModelFactory):
 
     customer = factory.SubFactory(UserFactory)
     restaurant = factory.SubFactory(RestaurantFactory)
+    cart_uuid = factory.LazyFunction(uuid.uuid4)
 
 
 class CartItemsFactory(factory.django.DjangoModelFactory):
@@ -45,9 +47,9 @@ class OrdersFactory(factory.django.DjangoModelFactory):
     customer = factory.SubFactory(
         UserFactory, email=factory.Sequence(lambda n: f"test_email{n}@example.com")
     )
-
-    total_price = 100.00
-
+    total_price = factory.Faker(
+        "pydecimal", left_digits=4, right_digits=2, positive=True
+    )
     address = "street : test , house : 10, city : Test"
     creation_date = factory.LazyFunction(timezone.now)
     customer_name = factory.LazyAttribute(lambda o: "%s" % o.customer)
