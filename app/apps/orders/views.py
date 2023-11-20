@@ -178,8 +178,7 @@ class StripeWebhookView(views.APIView):
         event = None
 
         try:
-            event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
-            # import pdb; pdb.set_trace();
+            event = stripe.Event.construct_from(payload, sig_header, endpoint_secret)
         except ValueError as e:
             # Invalid payload
             print("Error parsing payload: {}".format(str(e)))
@@ -197,5 +196,4 @@ class StripeWebhookView(views.APIView):
             order = Order.objects.get(intent_id=payment_intent)
             order.status = Order.STATUS.completed
             order.save()
-
         return response.Response(status=status.HTTP_200_OK)

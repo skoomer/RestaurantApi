@@ -14,8 +14,6 @@ from apps.restaurants.factories import DishesFactory, RestaurantFactory
 from apps.orders.factories import OrdersFactory, CartFactory, CartItemsFactory
 from apps.orders.models import Cart, Order
 from django.conf import settings
-# from stripe.webhook import generate_test_header_string
-# from stripe.webhook import generate_test_header_string
 
 
 @pytest.mark.django_db
@@ -374,6 +372,7 @@ class TestOrdersApi(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('checkout_session_id', response.data)
 
+    @pytest.mark.vcr()
     def test_checkout_session_completed(self):
         webhook_secret = settings.WEBHOOK_SECRET
         stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -387,9 +386,7 @@ class TestOrdersApi(TestCase):
         req = self.client.post(payment_url)
         order.refresh_from_db()
         order_intent = req.data['order_intent']
-        #################################
         payload = {
-            # "type": "payment_intent.created",
             "type": "payment_intent.succeeded",
             "payment_intent": order_intent,
             "amount": 20
@@ -407,10 +404,10 @@ class TestOrdersApi(TestCase):
         ).hexdigest()
 
         signature = f't={timestamp},v1={expected_signature}'
+
         response = self.client.post(
             url,
             data=payload_json,
-            # format="json",
             content_type="application/json",
             HTTP_STRIPE_SIGNATURE=signature,
         )
